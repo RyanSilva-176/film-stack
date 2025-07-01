@@ -17,5 +17,9 @@ Route::get('/auth/{provider}/redirect', [SocialiteController::class, 'create'])-
 
 Route::get('/auth/{provider}/callback', [SocialiteController::class, 'store'])->where('provider', 'google');
 
+Route::get('/tmdb/test-account-details', [App\Http\Controllers\TmdbController::class, 'testAccountDetails'])
+    ->middleware(['auth', 'verified'])
+    ->name('tmdb.test-account-details');
+
 require __DIR__ . '/settings.php';
 require __DIR__ . '/auth.php';
