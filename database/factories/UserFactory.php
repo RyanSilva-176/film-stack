@@ -29,6 +29,9 @@ class UserFactory extends Factory
             'email_verified_at' => now(),
             'password' => static::$password ??= Hash::make('password'),
             'remember_token' => Str::random(10),
+            'avatar' => null,
+            'provider' => null,
+            'provider_id' => null,
         ];
     }
 
@@ -39,6 +42,20 @@ class UserFactory extends Factory
     {
         return $this->state(fn (array $attributes) => [
             'email_verified_at' => null,
+        ]);
+    }
+
+    /**
+     * Create an OAuth user (without password)
+     */
+    public function oauth(string $provider = 'google'): static
+    {
+        return $this->state(fn (array $attributes) => [
+            'password' => null,
+            'provider' => $provider,
+            'provider_id' => fake()->unique()->numerify('##########'),
+            'avatar' => fake()->imageUrl(200, 200, 'people'),
+            'email_verified_at' => now(),
         ]);
     }
 }

@@ -6,6 +6,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use InvalidArgumentException;
 
 class User extends Authenticatable
 {
@@ -21,6 +22,10 @@ class User extends Authenticatable
         'name',
         'email',
         'password',
+        'avatar',
+        'provider',
+        'provider_id',
+        'email_verified_at',
     ];
 
     /**
@@ -44,5 +49,43 @@ class User extends Authenticatable
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
         ];
+    }
+
+    /**
+     * Boot the model.
+     */
+    protected static function boot()
+    {
+        parent::boot();
+
+        static::saving(function ($user) {
+            if ($user->provider && $user->provider_id) {
+                return true;
+            }
+
+            if (empty($user->password)) {
+                throw new InvalidArgumentException('Password é obrigatório para usuários não OAuth');
+            }
+
+            return true;
+        });
+    }
+
+    /**
+     * * Verifica se é usuário OAuth
+     * @return bool
+     */
+    public function isOAuthUser(): bool
+    {
+        return !empty($this->provider) && !empty($this->provider_id);
+    }
+
+    /**
+     * Verifica se tem senha definida
+     * @return bool
+     */
+    public function hasPassword(): bool
+    {
+        return !empty($this->password);
     }
 }

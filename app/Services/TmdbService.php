@@ -5,16 +5,23 @@ namespace App\Services;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Http\Client\PendingRequest;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Cache;
+use Illuminate\Http\Client\Response;
 
 class TmdbService
 {
     protected PendingRequest $client;
+    // TODO: Verificar os valores de cache e rate limit
+    protected int $cacheTimeout = 60; //? 1 minuto
+    protected int $rateLimitDelay = 250; //? 250ms entre requests
+    protected static ?float $lastRequestTime = null;
 
     public function __construct()
     {
         $apiKey = config('services.tmdb.api_key');
 
         if (!$apiKey) {
+            // ! [ERROR] Chave API TMDB não configurada no .env
             Log::error('Chave API TMDB não configurada no .env');
             abort(500, 'TMDB API Key não configurada no .env');
         }
@@ -22,23 +29,279 @@ class TmdbService
         $this->client = Http::withToken($apiKey)
             ->baseUrl('https://api.themoviedb.org/3')
             ->acceptJson()
-            ->withOptions(['force_ip_resolve' => 'v4']);
+            ->timeout(30)
+            ->retry(3, 1000)
+            ->withOptions([
+                'force_ip_resolve' => 'v4',
+                'verify' => true
+            ]);
     }
 
     /**
-     * @param string $accountId 
-     * @return array|null
+     * * Rate limiting para evitar exceder os limites da API
+     * @return void
+     */
+    protected function enforceRateLimit(): void
+    {
+        if (self::$lastRequestTime !== null) {
+            $timeSinceLastRequest = (microtime(true) - self::$lastRequestTime) * 1000;
+
+            if ($timeSinceLastRequest < $this->rateLimitDelay) {
+                //! [ERROR] Aguarda para não exceder o limite de requisições
+                usleep(($this->rateLimitDelay - $timeSinceLastRequest) * 1000);
+            }
+        }
+
+        self::$lastRequestTime = microtime(true);
+    }
+
+    /**
+     * * Executa uma requisição com cache e tratamento de erros
+     * @param string $endpoint
+     * @param array $params
+     * @param bool $useCache
+     * @return ?array
+     */
+    protected function makeRequest(string $endpoint, array $params = [], bool $useCache = true): ?array
+    {
+        $cacheKey = $this->generateCacheKey($endpoint, $params);
+
+        if ($useCache && Cache::has($cacheKey)) {
+            // * Retorna do cache se existir
+            return Cache::get($cacheKey);
+        }
+
+        $this->enforceRateLimit();
+
+        try {
+            $response = $this->client->get($endpoint, $params);
+
+            if ($response->successful()) {
+                $data = $response->json();
+
+                if ($useCache) {
+                    // * Salva no cache
+                    Cache::put($cacheKey, $data, $this->cacheTimeout);
+                }
+
+                return $data;
+            }
+
+            //! [ERROR] Falha na requisição
+            $this->logError($response, $endpoint, $params);
+            return null;
+        } catch (\Exception $e) {
+            //! [ERROR] Exceção na requisição TMDB
+            Log::error('Erro na requisição TMDB', [
+                'endpoint' => $endpoint,
+                'params' => $params,
+                'error' => $e->getMessage()
+            ]);
+
+            return null;
+        }
+    }
+
+    /**
+     * * Gera chave de cache única para a requisição
+     * @param string $endpoint
+     * @param array $params
+     * @return string
+     */
+    protected function generateCacheKey(string $endpoint, array $params = []): string
+    {
+        return 'tmdb_' . md5($endpoint . serialize($params));
+    }
+
+    /**
+     * * Log de erros detalhado
+     * @param Response $response
+     * @param string $endpoint
+     * @param array $params
+     * @return void
+     */
+    protected function logError(Response $response, string $endpoint, array $params = []): void
+    {
+        Log::error('Falha na requisição TMDB', [
+            'endpoint' => $endpoint,
+            'params' => $params,
+            'status_code' => $response->status(),
+            'response' => $response->body(),
+            'headers' => $response->headers()
+        ]);
+    }
+
+    /**
+     * * Busca detalhes da conta
+     * @param string $accountId
+     * @return ?array
      */
     public function getAccountDetails(string $accountId): ?array
     {
-        $response = $this->client->get("/account/{$accountId}");
+        return $this->makeRequest("/account/{$accountId}");
+    }
 
-        if ($response->successful()) {
-            return $response->json();
+    /**
+     * * Busca filmes populares
+     * @param int $page
+     * @return ?array
+     */
+    public function getPopularMovies(int $page = 1): ?array
+    {
+        return $this->makeRequest('/movie/popular', ['page' => $page]);
+    }
+
+    /**
+     * * Busca filmes em cartaz
+     * @param int $page
+     * @return ?array
+     */
+    public function getNowPlayingMovies(int $page = 1): ?array
+    {
+        return $this->makeRequest('/movie/now_playing', ['page' => $page]);
+    }
+
+    /**
+     * * Busca filmes mais bem avaliados
+     * @param int $page
+     * @return ?array
+     */
+    public function getTopRatedMovies(int $page = 1): ?array
+    {
+        return $this->makeRequest('/movie/top_rated', ['page' => $page]);
+    }
+
+    /**
+     * * Busca próximos lançamentos
+     * @param int $page
+     * @return ?array
+     */
+    public function getUpcomingMovies(int $page = 1): ?array
+    {
+        return $this->makeRequest('/movie/upcoming', ['page' => $page]);
+    }
+
+    /**
+     * * Busca detalhes de um filme específico
+     * @param int $movieId
+     * @param array $appendTo
+     * @return ?array
+     */
+    public function getMovieDetails(int $movieId, array $appendTo = []): ?array
+    {
+        $params = [];
+
+        if (!empty($appendTo)) {
+            // * Adiciona parâmetros extras à resposta
+            $params['append_to_response'] = implode(',', $appendTo);
         }
 
-        Log::error('Falha ao buscar detalhes da conta TMDB', ['response' => $response->body()]);
+        return $this->makeRequest("/movie/{$movieId}", $params);
+    }
 
-        return null;
+    /**
+     * * Busca por filmes
+     * @param string $query
+     * @param int $page
+     * @param array $filters
+     * @return ?array
+     */
+    public function searchMovies(string $query, int $page = 1, array $filters = []): ?array
+    {
+        $params = array_merge([
+            'query' => $query,
+            'page' => $page
+        ], $filters);
+
+        return $this->makeRequest('/search/movie', $params);
+    }
+
+    /**
+     * * Busca múltiplos filmes por IDs
+     * @param array $movieIds
+     * @param array $appendTo
+     * @return array
+     */
+    public function getMoviesByIds(array $movieIds, array $appendTo = []): array
+    {
+        $movies = [];
+
+        foreach ($movieIds as $movieId) {
+            $movie = $this->getMovieDetails($movieId, $appendTo);
+
+            if ($movie) {
+                $movies[] = $movie;
+            }
+        }
+
+        return $movies;
+    }
+
+    /**
+     * * Busca trending
+     * @param string $timeWindow
+     * @return ?array
+     */
+    public function getTrendingMovies(string $timeWindow = 'day'): ?array
+    {
+        return $this->makeRequest("/trending/movie/{$timeWindow}");
+    }
+
+    /**
+     * * Busca filmes descobertos
+     * @param array $filters
+     * @return ?array
+     */
+    public function discoverMovies(array $filters = []): ?array
+    {
+        return $this->makeRequest('/discover/movie', $filters);
+    }
+
+    /**
+     * * Busca gêneros de filmes
+     * @return ?array
+     */
+    public function getMovieGenres(): ?array
+    {
+        return $this->makeRequest('/genre/movie/list');
+    }
+
+    /**
+     * * Invalida cache específico
+     * @param string $endpoint
+     * @param array $params
+     */
+    public function invalidateCache(string $endpoint, array $params = []): void
+    {
+        $cacheKey = $this->generateCacheKey($endpoint, $params);
+        Cache::forget($cacheKey);
+    }
+
+    /**
+     * * Limpa todo o cache do TMDB
+     */
+    public function clearAllCache(): void
+    {
+        Cache::flush();
+    }
+
+    /**
+     * * Define timeout do cache
+     * @param int $seconds
+     * @return self
+     */
+    public function setCacheTimeout(int $seconds): self
+    {
+        $this->cacheTimeout = $seconds;
+        return $this;
+    }
+
+    /**
+     * * Desabilita cache para a próxima requisição
+     * @return self
+     */
+    public function withoutCache(): self
+    {
+        return $this;
     }
 }

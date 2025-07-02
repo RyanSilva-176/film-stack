@@ -89,7 +89,7 @@ const handleSocialLogin = (provider: string) => {
                 </Button>
             </div>
 
-            <div class="relative">
+            <div class="relative" v-if="props.hasGoogleAuth">
                 <div class="absolute inset-0 flex items-center">
                     <span class="w-full border-t" />
                 </div>
@@ -98,7 +98,7 @@ const handleSocialLogin = (provider: string) => {
                 </div>
             </div>
 
-            <div class="flex flex-col space-y-2">
+            <div class="flex flex-col space-y-2" v-if="props.hasGoogleAuth">
                 <Button type="button" variant="outline" class="w-full cursor-pointer" @click="handleSocialLogin('google')" :tabindex="7">
                     <svg class="mr-2 h-4 w-4" viewBox="0 0 24 24">
                         <path
@@ -120,6 +120,12 @@ const handleSocialLogin = (provider: string) => {
                     </svg>
                     <span>Google</span>
                 </Button>
+            </div>
+
+            <div v-if="form.hasErrors" class="mb-4 text-center text-sm font-medium text-red-600">
+                <div v-for="(error, key) in form.errors" :key="key">
+                    {{ error }}
+                </div>
             </div>
 
             <div class="text-center text-sm text-muted-foreground">
