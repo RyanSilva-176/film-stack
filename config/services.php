@@ -44,6 +44,20 @@ return [
     'tmdb' => [
         'api_key' => env('TMDB_API_KEY'),
         'account_id' => env('TMDB_ACCOUNT_ID'),
+        'base_url' => 'https://api.themoviedb.org/3',
+        'image_base_url' => 'https://image.tmdb.org/t/p/',
+        'image_sizes' => [
+            'poster' => ['w92', 'w154', 'w185', 'w342', 'w500', 'w780', 'original'],
+            'backdrop' => ['w300', 'w780', 'w1280', 'original'],
+            'logo' => ['w45', 'w92', 'w154', 'w185', 'w300', 'w500', 'original'],
+            'profile' => ['w45', 'w185', 'h632', 'original'],
+        ],
+        'default_sizes' => [
+            'poster' => 'w500',
+            'backdrop' => 'w1280',
+            'logo' => 'w185',
+            'profile' => 'w185',
+        ]
     ]
 
 ];

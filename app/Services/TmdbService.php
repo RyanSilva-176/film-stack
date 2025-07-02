@@ -304,4 +304,92 @@ class TmdbService
     {
         return $this;
     }
+
+    /**
+     * * Gera URL completa para imagem do TMDB
+     * @param string|null $imagePath
+     * @param string $type (poster, backdrop, logo, profile)
+     * @param string|null $size
+     * @return string|null
+     */
+    public function getImageUrl(?string $imagePath, string $type = 'poster', ?string $size = null): ?string
+    {
+        if (!$imagePath) {
+            return null;
+        }
+
+        $baseUrl = config('services.tmdb.image_base_url');
+        $defaultSize = $size ?? config("services.tmdb.default_sizes.{$type}", 'w500');
+        
+        return $baseUrl . $defaultSize . $imagePath;
+    }
+
+    /**
+     * * Gera URL do poster do filme
+     * @param string|null $posterPath
+     * @param string $size
+     * @return string|null
+     */
+    public function getPosterUrl(?string $posterPath, string $size = 'w500'): ?string
+    {
+        return $this->getImageUrl($posterPath, 'poster', $size);
+    }
+
+    /**
+     * * Gera URL do backdrop do filme
+     * @param string|null $backdropPath
+     * @param string $size
+     * @return string|null
+     */
+    public function getBackdropUrl(?string $backdropPath, string $size = 'w1280'): ?string
+    {
+        return $this->getImageUrl($backdropPath, 'backdrop', $size);
+    }
+
+    /**
+     * * Gera URL do logo
+     * @param string|null $logoPath
+     * @param string $size
+     * @return string|null
+     */
+    public function getLogoUrl(?string $logoPath, string $size = 'w185'): ?string
+    {
+        return $this->getImageUrl($logoPath, 'logo', $size);
+    }
+
+    /**
+     * * Gera URL do perfil (para atores/diretores)
+     * @param string|null $profilePath
+     * @param string $size
+     * @return string|null
+     */
+    public function getProfileUrl(?string $profilePath, string $size = 'w185'): ?string
+    {
+        return $this->getImageUrl($profilePath, 'profile', $size);
+    }
+
+    /**
+     * * Gera múltiplas URLs de imagem em diferentes tamanhos
+     * @param string|null $imagePath
+     * @param string $type
+     * @param array $sizes
+     * @return array
+     */
+    public function getImageUrls(?string $imagePath, string $type = 'poster', array $sizes = []): array
+    {
+        if (!$imagePath) {
+            return [];
+        }
+
+        if (empty($sizes)) {
+            $sizes = config("services.tmdb.image_sizes.{$type}", ['w500']);
+        }
+
+        $urls = [];
+        foreach ($sizes as $size) {
+            $urls[$size] = $this->getImageUrl($imagePath, $type, $size);
+        }
+
+        return $urls;
+    }
 }

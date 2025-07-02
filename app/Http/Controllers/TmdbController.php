@@ -151,8 +151,90 @@ class TmdbController extends Controller
                 return response()->json(['error' => 'Filme não encontrado'], 404);
             }
 
+            // * Adiciona URLs das imagens ao resultado
+            $movie['image_urls'] = [
+                'poster' => [
+                    'small' => $this->tmdbService->getPosterUrl($movie['poster_path'] ?? null, 'w185'),
+                    'medium' => $this->tmdbService->getPosterUrl($movie['poster_path'] ?? null, 'w342'),
+                    'large' => $this->tmdbService->getPosterUrl($movie['poster_path'] ?? null, 'w500'),
+                    'xlarge' => $this->tmdbService->getPosterUrl($movie['poster_path'] ?? null, 'w780'),
+                    'original' => $this->tmdbService->getPosterUrl($movie['poster_path'] ?? null, 'original'),
+                ],
+                'backdrop' => [
+                    'small' => $this->tmdbService->getBackdropUrl($movie['backdrop_path'] ?? null, 'w300'),
+                    'medium' => $this->tmdbService->getBackdropUrl($movie['backdrop_path'] ?? null, 'w780'),
+                    'large' => $this->tmdbService->getBackdropUrl($movie['backdrop_path'] ?? null, 'w1280'),
+                    'original' => $this->tmdbService->getBackdropUrl($movie['backdrop_path'] ?? null, 'original'),
+                ]
+            ];
+
+            // * Adiciona URLs para logos das produtoras se existirem
+            if (isset($movie['production_companies'])) {
+                foreach ($movie['production_companies'] as &$company) {
+                    if ($company['logo_path']) {
+                        $company['logo_url'] = $this->tmdbService->getLogoUrl($company['logo_path']);
+                    }
+                }
+            }
+
+            // * Adiciona URLs para posters da coleção se existir
+            if (isset($movie['belongs_to_collection']['poster_path'])) {
+                $movie['belongs_to_collection']['poster_url'] = $this->tmdbService->getPosterUrl(
+                    $movie['belongs_to_collection']['poster_path']
+                );
+                $movie['belongs_to_collection']['backdrop_url'] = $this->tmdbService->getBackdropUrl(
+                    $movie['belongs_to_collection']['backdrop_path'] ?? null
+                );
+            }
+
             //? Retorna detalhes do filme
             return response()->json($movie);
+        } catch (\Exception $e) {
+            //! [ERROR] Captura e retorna erro interno
+            return response()->json([
+                'error' => 'Erro interno: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * * Endpoint específico para buscar URLs de imagens de um filme
+     * @param int $movieId
+     * @return JsonResponse
+     */
+    public function getMovieImages(int $movieId): JsonResponse
+    {
+        try {
+            $movie = $this->tmdbService->getMovieDetails($movieId);
+
+            //! [ERROR] Retorna erro se o filme não for encontrado
+            if (!$movie) {
+                return response()->json(['error' => 'Filme não encontrado'], 404);
+            }
+
+            $images = [
+                'movie_id' => $movieId,
+                'title' => $movie['title'] ?? 'Título não disponível',
+                'poster_urls' => $this->tmdbService->getImageUrls($movie['poster_path'] ?? null, 'poster'),
+                'backdrop_urls' => $this->tmdbService->getImageUrls($movie['backdrop_path'] ?? null, 'backdrop'),
+            ];
+
+            // * Adiciona URLs da coleção se existir
+            if (isset($movie['belongs_to_collection'])) {
+                $images['collection'] = [
+                    'name' => $movie['belongs_to_collection']['name'],
+                    'poster_urls' => $this->tmdbService->getImageUrls(
+                        $movie['belongs_to_collection']['poster_path'] ?? null, 
+                        'poster'
+                    ),
+                    'backdrop_urls' => $this->tmdbService->getImageUrls(
+                        $movie['belongs_to_collection']['backdrop_path'] ?? null, 
+                        'backdrop'
+                    ),
+                ];
+            }
+
+            return response()->json($images);
         } catch (\Exception $e) {
             //! [ERROR] Captura e retorna erro interno
             return response()->json([

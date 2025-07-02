@@ -32,6 +32,9 @@ Route::prefix('tmdb')->middleware(['auth', 'verified'])->group(function () {
 
     Route::get('/movies/{movieId}', [App\Http\Controllers\TmdbController::class, 'getMovieDetails'])
         ->name('tmdb.movies.details');
+
+    Route::get('/movies/{movieId}/images', [App\Http\Controllers\TmdbController::class, 'getMovieImages'])
+        ->name('tmdb.movies.images');
 });
 
 require __DIR__ . '/settings.php';
