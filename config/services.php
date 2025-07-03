@@ -42,6 +42,7 @@ return [
     ],
 
     'tmdb' => [
+        'api_base_url' => env('TMDB_API_BASE_URL', 'https://api.themoviedb.org/3'),
         'api_key' => env('TMDB_API_KEY'),
         'account_id' => env('TMDB_ACCOUNT_ID'),
         'base_url' => 'https://api.themoviedb.org/3',

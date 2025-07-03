@@ -7,30 +7,40 @@ use Illuminate\Http\Client\PendingRequest;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Http\Client\Response;
+use Illuminate\Http\Client\ConnectionException;
+use Illuminate\Http\Client\RequestException;
+use RuntimeException;
+use Exception;
 
 class TmdbService
 {
     protected PendingRequest $client;
-    // TODO: Verificar os valores de cache e rate limit
-    protected int $cacheTimeout = 60; //? 1 minuto
-    protected int $rateLimitDelay = 250; //? 250ms entre requests
+    protected int $cacheTimeout = 300; // 5 minutos para dados dinâmicos
+    protected int $staticCacheTimeout = 86400; // 24 horas para dados estáticos 
+    protected int $rateLimitDelay = 250; // 250ms entre requests
     protected static ?float $lastRequestTime = null;
+
+    public const CACHE_PREFIX = 'tmdb_';
+    public const GENRES_CACHE_KEY = 'tmdb_movie_genres';
+    public const DEFAULT_PAGE_SIZE = 20;
 
     public function __construct()
     {
         $apiKey = config('services.tmdb.api_key');
+        $tmdbBaseUrl = config('services.tmdb.api_base_url', 'https://api.themoviedb.org/3');
 
         if (!$apiKey) {
-            // ! [ERROR] Chave API TMDB não configurada no .env
-            Log::error('Chave API TMDB não configurada no .env');
-            abort(500, 'TMDB API Key não configurada no .env');
+            Log::error('TMDB API Key não configurada no .env');
+            throw new RuntimeException('TMDB API Key não configurada no .env');
         }
 
         $this->client = Http::withToken($apiKey)
-            ->baseUrl('https://api.themoviedb.org/3')
+            ->baseUrl($tmdbBaseUrl)
             ->acceptJson()
             ->timeout(30)
-            ->retry(3, 1000)
+            ->retry(3, 1000, function ($exception, $request) {
+                return $exception instanceof ConnectionException;
+            })
             ->withOptions([
                 'force_ip_resolve' => 'v4',
                 'verify' => true
@@ -56,18 +66,19 @@ class TmdbService
     }
 
     /**
-     * * Executa uma requisição com cache e tratamento de erros
+     ** Executa uma requisição com cache
      * @param string $endpoint
      * @param array $params
      * @param bool $useCache
-     * @return ?array
+     * @param int|null $customCacheTimeout
+     * @return array|null
      */
-    protected function makeRequest(string $endpoint, array $params = [], bool $useCache = true): ?array
+    protected function makeRequest(string $endpoint, array $params = [], bool $useCache = true, ?int $customCacheTimeout = null): ?array
     {
         $cacheKey = $this->generateCacheKey($endpoint, $params);
+        $cacheTimeout = $customCacheTimeout ?? $this->cacheTimeout;
 
         if ($useCache && Cache::has($cacheKey)) {
-            // * Retorna do cache se existir
             return Cache::get($cacheKey);
         }
 
@@ -80,61 +91,108 @@ class TmdbService
                 $data = $response->json();
 
                 if ($useCache) {
-                    // * Salva no cache
-                    Cache::put($cacheKey, $data, $this->cacheTimeout);
+                    Cache::put($cacheKey, $data, $cacheTimeout);
                 }
 
                 return $data;
             }
 
-            //! [ERROR] Falha na requisição
-            $this->logError($response, $endpoint, $params);
+            // ! Tratamento de erros
+            $this->handleHttpError($response, $endpoint, $params);
             return null;
-        } catch (\Exception $e) {
-            //! [ERROR] Exceção na requisição TMDB
-            Log::error('Erro na requisição TMDB', [
+        } catch (ConnectionException $e) {
+            Log::error('TMDB Connection Error', [
                 'endpoint' => $endpoint,
                 'params' => $params,
                 'error' => $e->getMessage()
             ]);
-
-            return null;
+            throw new RuntimeException('Falha na conexão com TMDB API: ' . $e->getMessage());
+        } catch (RequestException $e) {
+            Log::error('TMDB Request Error', [
+                'endpoint' => $endpoint,
+                'params' => $params,
+                'error' => $e->getMessage()
+            ]);
+            throw new RuntimeException('Erro na requisição TMDB: ' . $e->getMessage());
+        } catch (Exception $e) {
+            Log::error('TMDB Unexpected Error', [
+                'endpoint' => $endpoint,
+                'params' => $params,
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+            throw new RuntimeException('Erro inesperado na API TMDB: ' . $e->getMessage());
         }
     }
 
     /**
-     * * Gera chave de cache única para a requisição
+     ** Gera chave de cache única para a requisição
      * @param string $endpoint
      * @param array $params
      * @return string
      */
     protected function generateCacheKey(string $endpoint, array $params = []): string
     {
-        return 'tmdb_' . md5($endpoint . serialize($params));
+        return self::CACHE_PREFIX . md5($endpoint . serialize($params));
     }
 
     /**
-     * * Log de erros detalhado
+     ** Tratamento específico de erros HTTP
      * @param Response $response
      * @param string $endpoint
      * @param array $params
-     * @return void
      */
-    protected function logError(Response $response, string $endpoint, array $params = []): void
+    protected function handleHttpError(Response $response, string $endpoint, array $params = []): void
     {
-        Log::error('Falha na requisição TMDB', [
+        $statusCode = $response->status();
+        $responseBody = $response->json();
+
+        $errorMessage = $responseBody['status_message'] ?? 'Erro desconhecido na API TMDB';
+
+        // ! [ERROR] Log detalhado do erro
+        Log::error('TMDB API Error', [
             'endpoint' => $endpoint,
             'params' => $params,
-            'status_code' => $response->status(),
-            'response' => $response->body(),
-            'headers' => $response->headers()
+            'status_code' => $statusCode,
+            'error_message' => $errorMessage,
+            'response' => $responseBody
         ]);
+
+        switch ($statusCode) {
+            case 401:
+                throw new RuntimeException('Chave de API TMDB inválida ou expirada');
+            case 404:
+                throw new RuntimeException('Recurso não encontrado na API TMDB');
+            case 429:
+                throw new RuntimeException('Limite de requisições TMDB excedido. Tente novamente mais tarde.');
+            case 500:
+            case 502:
+            case 503:
+                throw new RuntimeException('Erro interno do servidor TMDB. Tente novamente mais tarde.');
+            default:
+                throw new RuntimeException("Erro TMDB ({$statusCode}): {$errorMessage}");
+        }
     }
 
     /**
-     * * Busca detalhes da conta
+     * * Valida e sanitiza parâmetros de paginação
+     * @param array $params
+     * @return array
+     */
+    protected function validatePaginationParams(array $params): array
+    {
+        // TMDB API suporta páginas de 1 a 1000
+        if (isset($params['page'])) {
+            $params['page'] = max(1, min(1000, (int) $params['page']));
+        }
+
+        return $params;
+    }
+
+    /**
+     * * Busca detalhes da conta apenas para debugging
      * @param string $accountId
-     * @return ?array
+     * @return array|null
      */
     public function getAccountDetails(string $accountId): ?array
     {
@@ -142,82 +200,173 @@ class TmdbService
     }
 
     /**
-     * * Busca filmes populares
+     * * Busca lista de gêneros de filmes
+     * @return mixed
+     */
+    public function getMovieGenres(): ?array
+    {
+        return $this->makeRequest('/genre/movie/list', [], true, $this->staticCacheTimeout);
+    }
+
+    /**
+     * * Busca gênero específico por ID
+     * @param int $genreId
+     * @return array|null
+     */
+    public function getGenreById(int $genreId): ?array
+    {
+        $genres = $this->getMovieGenres();
+
+        if (!$genres || !isset($genres['genres'])) {
+            return null;
+        }
+
+        foreach ($genres['genres'] as $genre) {
+            if ($genre['id'] === $genreId) {
+                return $genre;
+            }
+        }
+
+        return null;
+    }
+
+    /**
+     * * Mapeia IDs de gêneros para nomes
+     * @param array $genreIds
+     * @return array
+     */
+    public function mapGenreIdsToNames(array $genreIds): array
+    {
+        $genres = $this->getMovieGenres();
+
+        if (!$genres || !isset($genres['genres'])) {
+            return [];
+        }
+
+        $genreMap = [];
+        foreach ($genres['genres'] as $genre) {
+            $genreMap[$genre['id']] = $genre['name'];
+        }
+
+        return array_map(fn($id) => $genreMap[$id] ?? 'Desconhecido', $genreIds);
+    }
+
+    /**
+     * * Busca filmes populares com paginação
      * @param int $page
-     * @return ?array
+     * @return array|null
      */
     public function getPopularMovies(int $page = 1): ?array
     {
-        return $this->makeRequest('/movie/popular', ['page' => $page]);
+        $params = $this->validatePaginationParams(['page' => $page]);
+        return $this->makeRequest('/movie/popular', $params);
     }
 
     /**
-     * * Busca filmes em cartaz
+     * * Busca filmes em cartaz com paginação
      * @param int $page
-     * @return ?array
+     * @return array|null
      */
     public function getNowPlayingMovies(int $page = 1): ?array
     {
-        return $this->makeRequest('/movie/now_playing', ['page' => $page]);
+        $params = $this->validatePaginationParams(['page' => $page]);
+        return $this->makeRequest('/movie/now_playing', $params);
     }
 
     /**
-     * * Busca filmes mais bem avaliados
+     * * Busca filmes mais bem avaliados com paginação
      * @param int $page
-     * @return ?array
+     * @return array|null
      */
     public function getTopRatedMovies(int $page = 1): ?array
     {
-        return $this->makeRequest('/movie/top_rated', ['page' => $page]);
+        $params = $this->validatePaginationParams(['page' => $page]);
+        return $this->makeRequest('/movie/top_rated', $params);
     }
 
     /**
-     * * Busca próximos lançamentos
+     * Busca próximos lançamentos com paginação
      * @param int $page
-     * @return ?array
+     * @return array|null
      */
     public function getUpcomingMovies(int $page = 1): ?array
     {
-        return $this->makeRequest('/movie/upcoming', ['page' => $page]);
+        $params = $this->validatePaginationParams(['page' => $page]);
+        return $this->makeRequest('/movie/upcoming', $params);
     }
 
     /**
-     * * Busca detalhes de um filme específico
+     * * Busca detalhes de um filme específico com dados completos
      * @param int $movieId
      * @param array $appendTo
-     * @return ?array
+     * @return array|null
      */
     public function getMovieDetails(int $movieId, array $appendTo = []): ?array
     {
         $params = [];
 
+        $defaultAppendTo = ['credits', 'videos', 'images', 'recommendations', 'similar'];
+        $appendTo = array_unique(array_merge($defaultAppendTo, $appendTo));
+
         if (!empty($appendTo)) {
-            // * Adiciona parâmetros extras à resposta
             $params['append_to_response'] = implode(',', $appendTo);
         }
 
-        return $this->makeRequest("/movie/{$movieId}", $params);
+        $movie = $this->makeRequest("/movie/{$movieId}", $params);
+
+        if ($movie) {
+            //? Mais informações de gêneros se disponíveis
+            $movie = $this->enrichMovieWithGenres($movie);
+        }
+
+        return $movie;
     }
 
     /**
-     * * Busca por filmes
+     * Adsdiona informações completas de gêneros ao filme
+     */
+    protected function enrichMovieWithGenres(array $movie): array
+    {
+        if (isset($movie['genre_ids']) && !isset($movie['genres'])) {
+            $genreNames = $this->mapGenreIdsToNames($movie['genre_ids']);
+            $movie['genre_names'] = $genreNames;
+        }
+
+        if (isset($movie['genres'])) {
+            $movie['genre_names'] = array_column($movie['genres'], 'name');
+        }
+
+        return $movie;
+    }
+
+    /**
+     * Busca por filmes com paginação aprimorada e filtros
      * @param string $query
      * @param int $page
      * @param array $filters
-     * @return ?array
+     * @return array|null
      */
     public function searchMovies(string $query, int $page = 1, array $filters = []): ?array
     {
         $params = array_merge([
-            'query' => $query,
-            'page' => $page
+            'query' => trim($query),
+            'page' => $page,
+            'include_adult' => false,
         ], $filters);
 
-        return $this->makeRequest('/search/movie', $params);
+        $params = $this->validatePaginationParams($params);
+
+        $results = $this->makeRequest('/search/movie', $params);
+
+        if ($results && isset($results['results'])) {
+            $results['results'] = array_map([$this, 'enrichMovieWithGenres'], $results['results']);
+        }
+
+        return $results;
     }
 
     /**
-     * * Busca múltiplos filmes por IDs
+     * Busca múltiplos filmes por IDs com dados completos
      * @param array $movieIds
      * @param array $appendTo
      * @return array
@@ -227,10 +376,16 @@ class TmdbService
         $movies = [];
 
         foreach ($movieIds as $movieId) {
-            $movie = $this->getMovieDetails($movieId, $appendTo);
-
-            if ($movie) {
-                $movies[] = $movie;
+            try {
+                $movie = $this->getMovieDetails($movieId, $appendTo);
+                if ($movie) {
+                    $movies[] = $movie;
+                }
+            } catch (Exception $e) {
+                Log::warning('Falha ao buscar filme', [
+                    'movie_id' => $movieId,
+                    'error' => $e->getMessage()
+                ]);
             }
         }
 
@@ -238,38 +393,69 @@ class TmdbService
     }
 
     /**
-     * * Busca trending
-     * @param string $timeWindow
-     * @return ?array
+     * Busca filmes trending com paginação
+     * @param string $timeWindow (day, week)
+     * @return array|null
      */
-    public function getTrendingMovies(string $timeWindow = 'day'): ?array
+    public function getTrendingMovies(string $timeWindow = 'day', int $page = 1): ?array
     {
-        return $this->makeRequest("/trending/movie/{$timeWindow}");
+        $params = $this->validatePaginationParams(['page' => $page]);
+        return $this->makeRequest("/trending/movie/{$timeWindow}", $params);
     }
 
     /**
-     * * Busca filmes descobertos
+     ** Descobre filmes com filtros avançados e paginação
      * @param array $filters
-     * @return ?array
+     * @param int $page
+     * @return array|null
      */
-    public function discoverMovies(array $filters = []): ?array
+    public function discoverMovies(array $filters = [], int $page = 1): ?array
     {
-        return $this->makeRequest('/discover/movie', $filters);
+        $params = array_merge($filters, ['page' => $page]);
+        $params = $this->validatePaginationParams($params);
+
+        return $this->makeRequest('/discover/movie', $params);
     }
 
     /**
-     * * Busca gêneros de filmes
-     * @return ?array
+     * * Busca filmes por gênero específico
+     * @param int $genreId
+     * @param int $page
+     * @param array $additionalFilters
+     * @return array|null
      */
-    public function getMovieGenres(): ?array
+    public function getMoviesByGenre(int $genreId, int $page = 1, array $additionalFilters = []): ?array
     {
-        return $this->makeRequest('/genre/movie/list');
+        $filters = array_merge([
+            'with_genres' => $genreId,
+            'sort_by' => 'popularity.desc'
+        ], $additionalFilters);
+
+        return $this->discoverMovies($filters, $page);
+    }
+
+    /**
+     * * Busca informações de paginação formatadas
+     * @param array $response
+     * @return array
+     */
+    public function getPaginationInfo(array $response): array
+    {
+        return [
+            'current_page' => $response['page'] ?? 1,
+            'total_pages' => min($response['total_pages'] ?? 1, 1000),
+            'total_results' => $response['total_results'] ?? 0,
+            'per_page' => self::DEFAULT_PAGE_SIZE,
+            'has_next_page' => ($response['page'] ?? 1) < min($response['total_pages'] ?? 1, 1000),
+            'has_previous_page' => ($response['page'] ?? 1) > 1
+        ];
     }
 
     /**
      * * Invalida cache específico
      * @param string $endpoint
      * @param array $params
+     * @return void
      */
     public function invalidateCache(string $endpoint, array $params = []): void
     {
@@ -320,7 +506,7 @@ class TmdbService
 
         $baseUrl = config('services.tmdb.image_base_url');
         $defaultSize = $size ?? config("services.tmdb.default_sizes.{$type}", 'w500');
-        
+
         return $baseUrl . $defaultSize . $imagePath;
     }
 
