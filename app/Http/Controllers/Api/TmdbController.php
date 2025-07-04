@@ -3,13 +3,13 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
-use App\Services\TmdbService;
+use App\Services\Tmdb\Facades\Tmdb;
 use Illuminate\Http\JsonResponse;
 use Exception;
 
 class TmdbController extends Controller
 {
-    public function __construct(protected TmdbService $tmdbService)
+    public function __construct()
     {
         if (!config('services.tmdb.api_key')) {
             abort(500, 'TMDB API Key não configurada no .env');
@@ -17,10 +17,6 @@ class TmdbController extends Controller
 
         if (!config('services.tmdb.account_id')) {
             abort(500, 'TMDB Account ID não configurado no .env');
-        }
-
-        if (!$this->tmdbService) {
-            abort(500, 'Serviço TMDB não disponível');
         }
     }
 
@@ -37,7 +33,7 @@ class TmdbController extends Controller
         }
 
         try {
-            $details = $this->tmdbService->getAccountDetails($accountId);
+            $details = Tmdb::getAccountDetails($accountId);
 
             if (!$details || isset($details['status_code'])) {
                 $errorMsg = 'Falha ao buscar detalhes da conta TMDB';
@@ -65,7 +61,7 @@ class TmdbController extends Controller
     public function getMovieGenres(): JsonResponse
     {
         try {
-            $genres = $this->tmdbService->getMovieGenres();
+            $genres = Tmdb::getMovieGenres();
 
             if (!$genres || !isset($genres['genres'])) {
                 return response()->json(['error' => 'Falha ao buscar gêneros de filmes'], 500);
@@ -75,7 +71,7 @@ class TmdbController extends Controller
                 'success' => true,
                 'genres' => $genres['genres']
             ]);
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             return response()->json([
                 'error' => 'Erro interno: ' . $e->getMessage()
             ], 500);
@@ -90,7 +86,7 @@ class TmdbController extends Controller
     {
         try {
             $page = request('page', 1);
-            $movies = $this->tmdbService->getPopularMovies($page);
+            $movies = Tmdb::getPopularMovies($page);
 
             if (!$movies) {
                 return response()->json(['error' => 'Falha ao buscar filmes populares'], 500);
@@ -99,7 +95,7 @@ class TmdbController extends Controller
             return response()->json([
                 'success' => true,
                 'data' => $movies['results'] ?? [],
-                'pagination' => $this->tmdbService->getPaginationInfo($movies)
+                'pagination' => Tmdb::getPaginationInfo($movies)
             ]);
         } catch (Exception $e) {
             return response()->json([
@@ -127,7 +123,7 @@ class TmdbController extends Controller
                 'include_adult' => filter_var($includeAdult, FILTER_VALIDATE_BOOLEAN)
             ];
 
-            $results = $this->tmdbService->searchMovies($query, $page, $filters);
+            $results = Tmdb::searchMovies($query, $page, $filters);
 
             if (!$results) {
                 return response()->json(['error' => 'Falha na busca de filmes'], 500);
@@ -160,7 +156,7 @@ class TmdbController extends Controller
                 $appendTo = explode(',', $appendTo);
             }
 
-            $movieDTO = $this->tmdbService->getMovieDetails($movieId, $appendTo);
+            $movieDTO = Tmdb::getMovieDetails($movieId, $appendTo);
 
             if (!$movieDTO) {
                 return response()->json(['error' => 'Filme não encontrado'], 404);
@@ -170,33 +166,33 @@ class TmdbController extends Controller
 
             $movie['image_urls'] = [
                 'poster' => [
-                    'small' => $this->tmdbService->getPosterUrl($movieDTO->posterPath, 'w185'),
-                    'medium' => $this->tmdbService->getPosterUrl($movieDTO->posterPath, 'w342'),
-                    'large' => $this->tmdbService->getPosterUrl($movieDTO->posterPath, 'w500'),
-                    'xlarge' => $this->tmdbService->getPosterUrl($movieDTO->posterPath, 'w780'),
-                    'original' => $this->tmdbService->getPosterUrl($movieDTO->posterPath, 'original'),
+                    'small' => Tmdb::getPosterUrl($movieDTO->posterPath, 'w185'),
+                    'medium' => Tmdb::getPosterUrl($movieDTO->posterPath, 'w342'),
+                    'large' => Tmdb::getPosterUrl($movieDTO->posterPath, 'w500'),
+                    'xlarge' => Tmdb::getPosterUrl($movieDTO->posterPath, 'w780'),
+                    'original' => Tmdb::getPosterUrl($movieDTO->posterPath, 'original'),
                 ],
                 'backdrop' => [
-                    'small' => $this->tmdbService->getBackdropUrl($movieDTO->backdropPath, 'w300'),
-                    'medium' => $this->tmdbService->getBackdropUrl($movieDTO->backdropPath, 'w780'),
-                    'large' => $this->tmdbService->getBackdropUrl($movieDTO->backdropPath, 'w1280'),
-                    'original' => $this->tmdbService->getBackdropUrl($movieDTO->backdropPath, 'original'),
+                    'small' => Tmdb::getBackdropUrl($movieDTO->backdropPath, 'w300'),
+                    'medium' => Tmdb::getBackdropUrl($movieDTO->backdropPath, 'w780'),
+                    'large' => Tmdb::getBackdropUrl($movieDTO->backdropPath, 'w1280'),
+                    'original' => Tmdb::getBackdropUrl($movieDTO->backdropPath, 'original'),
                 ]
             ];
 
             if (isset($movie['production_companies'])) {
                 foreach ($movie['production_companies'] as &$company) {
                     if (isset($company['logo_path']) && $company['logo_path']) {
-                        $company['logo_url'] = $this->tmdbService->getLogoUrl($company['logo_path']);
+                        $company['logo_url'] = Tmdb::getLogoUrl($company['logo_path']);
                     }
                 }
             }
 
             if (isset($movie['belongs_to_collection']['poster_path'])) {
-                $movie['belongs_to_collection']['poster_url'] = $this->tmdbService->getPosterUrl(
+                $movie['belongs_to_collection']['poster_url'] = Tmdb::getPosterUrl(
                     $movie['belongs_to_collection']['poster_path']
                 );
-                $movie['belongs_to_collection']['backdrop_url'] = $this->tmdbService->getBackdropUrl(
+                $movie['belongs_to_collection']['backdrop_url'] = Tmdb::getBackdropUrl(
                     $movie['belongs_to_collection']['backdrop_path'] ?? null
                 );
             }
@@ -217,7 +213,7 @@ class TmdbController extends Controller
     public function getMovieImages(int $movieId): JsonResponse
     {
         try {
-            $movieDTO = $this->tmdbService->getMovieDetails($movieId);
+            $movieDTO = Tmdb::getMovieDetails($movieId);
 
             if (!$movieDTO) {
                 return response()->json(['error' => 'Filme não encontrado'], 404);
@@ -226,19 +222,19 @@ class TmdbController extends Controller
             $images = [
                 'movie_id' => $movieId,
                 'title' => $movieDTO->title ?? 'Título não disponível',
-                'poster_urls' => $this->tmdbService->getImageUrls($movieDTO->posterPath, 'poster'),
-                'backdrop_urls' => $this->tmdbService->getImageUrls($movieDTO->backdropPath, 'backdrop'),
+                'poster_urls' => Tmdb::getImageUrls($movieDTO->posterPath, 'poster'),
+                'backdrop_urls' => Tmdb::getImageUrls($movieDTO->backdropPath, 'backdrop'),
             ];
 
             $movieArray = $movieDTO->toArray();
             if (isset($movieArray['belongs_to_collection'])) {
                 $images['collection'] = [
                     'name' => $movieArray['belongs_to_collection']['name'],
-                    'poster_urls' => $this->tmdbService->getImageUrls(
+                    'poster_urls' => Tmdb::getImageUrls(
                         $movieArray['belongs_to_collection']['poster_path'] ?? null,
                         'poster'
                     ),
-                    'backdrop_urls' => $this->tmdbService->getImageUrls(
+                    'backdrop_urls' => Tmdb::getImageUrls(
                         $movieArray['belongs_to_collection']['backdrop_path'] ?? null,
                         'backdrop'
                     ),
@@ -264,7 +260,7 @@ class TmdbController extends Controller
             $timeWindow = request('time_window', 'day');
             $page = request('page', 1);
 
-            $movies = $this->tmdbService->getTrendingMovies($timeWindow, $page);
+            $movies = Tmdb::getTrendingMovies($timeWindow, $page);
 
             if (!$movies) {
                 return response()->json(['error' => 'Falha ao buscar filmes em alta'], 500);
@@ -274,7 +270,7 @@ class TmdbController extends Controller
                 'success' => true,
                 'time_window' => $timeWindow,
                 'data' => $movies['results'] ?? [],
-                'pagination' => $this->tmdbService->getPaginationInfo($movies)
+                'pagination' => Tmdb::getPaginationInfo($movies)
             ]);
         } catch (Exception $e) {
             return response()->json([
@@ -302,7 +298,7 @@ class TmdbController extends Controller
                 'with_runtime.lte'
             ]);
 
-            $movies = $this->tmdbService->discoverMovies($filters, $page);
+            $movies = Tmdb::discoverMovies($filters, $page);
 
             if (!$movies) {
                 return response()->json(['error' => 'Falha ao descobrir filmes'], 500);
@@ -312,7 +308,7 @@ class TmdbController extends Controller
                 'success' => true,
                 'filters' => $filters,
                 'data' => $movies['results'] ?? [],
-                'pagination' => $this->tmdbService->getPaginationInfo($movies)
+                'pagination' => Tmdb::getPaginationInfo($movies)
             ]);
         } catch (Exception $e) {
             return response()->json([
@@ -336,20 +332,20 @@ class TmdbController extends Controller
                 'sort_by' => $sortBy
             ];
 
-            $movies = $this->tmdbService->getMoviesByGenre($genreId, $page, $additionalFilters);
+            $movies = Tmdb::getMoviesByGenre($genreId, $page, $additionalFilters);
 
             if (!$movies) {
                 return response()->json(['error' => 'Falha ao buscar filmes do gênero'], 500);
             }
 
-            $genre = $this->tmdbService->getGenreById($genreId);
+            $genre = Tmdb::getGenreById($genreId);
 
             return response()->json([
                 'success' => true,
                 'genre' => $genre,
                 'sort_by' => $sortBy,
                 'data' => $movies['results'] ?? [],
-                'pagination' => $this->tmdbService->getPaginationInfo($movies)
+                'pagination' => Tmdb::getPaginationInfo($movies)
             ]);
         } catch (Exception $e) {
             return response()->json([
@@ -378,7 +374,7 @@ class TmdbController extends Controller
         }
 
         try {
-            $movies = $this->tmdbService->getMoviesByIds($movieIds);
+            $movies = Tmdb::getMoviesByIds($movieIds);
 
             return response()->json([
                 'success' => true,

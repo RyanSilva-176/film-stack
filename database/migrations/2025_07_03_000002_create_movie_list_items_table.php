@@ -11,10 +11,10 @@ return new class extends Migration
         Schema::create('movie_list_items', function (Blueprint $table) {
             $table->id();
             $table->foreignId('movie_list_id')->constrained()->onDelete('cascade');
-            $table->unsignedInteger('tmdb_movie_id'); // ID do filme no TMDB
-            $table->timestamp('watched_at')->nullable(); // Para lista "assistidos"
-            $table->tinyInteger('rating')->nullable(); // Rating pessoal do usuário (1-10)
-            $table->text('notes')->nullable(); // Notas pessoais sobre o filme
+            $table->unsignedInteger('tmdb_movie_id');
+            $table->timestamp('watched_at')->nullable();
+            $table->tinyInteger('rating')->nullable();
+            $table->text('notes')->nullable();
             $table->integer('sort_order')->default(0);
             $table->timestamps();
 
