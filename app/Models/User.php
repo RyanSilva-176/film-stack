@@ -6,6 +6,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use InvalidArgumentException;
 
 class User extends Authenticatable
@@ -81,11 +82,51 @@ class User extends Authenticatable
     }
 
     /**
-     * Verifica se tem senha definida
+     ** Verifica se tem senha definida
      * @return bool
      */
     public function hasPassword(): bool
     {
         return !empty($this->password);
+    }
+
+    /**
+     ** Relacionamento com as listas de filmes
+     */
+    public function movieLists(): HasMany
+    {
+        return $this->hasMany(MovieList::class)->orderBy('sort_order');
+    }
+
+    /**
+     ** Busca lista específica por tipo
+     */
+    public function getListByType(string $type): ?MovieList
+    {
+        return $this->movieLists()->where('type', $type)->first();
+    }
+
+    /**
+     ** Busca lista de filmes curtidos
+     */
+    public function getLikedMoviesList(): ?MovieList
+    {
+        return $this->getListByType(MovieList::TYPE_LIKED);
+    }
+
+    /**
+     ** Busca lista de filmes para assistir
+     */
+    public function getWatchlistMovies(): ?MovieList
+    {
+        return $this->getListByType(MovieList::TYPE_WATCHLIST);
+    }
+
+    /**
+     ** Busca lista de filmes assistidos
+     */
+    public function getWatchedMovies(): ?MovieList
+    {
+        return $this->getListByType(MovieList::TYPE_WATCHED);
     }
 }

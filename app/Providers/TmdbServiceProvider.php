@@ -3,11 +3,11 @@
 namespace App\Providers;
 
 use Illuminate\Support\ServiceProvider;
-use App\Services\TmdbService;
-use App\Services\Tmdb\TmdbMovieService;
-use App\Services\Tmdb\TmdbGenreService;
-use App\Services\Tmdb\TmdbSearchService;
-use App\Services\Tmdb\TmdbImageService;
+use App\Services\Tmdb\TmdbService;
+use App\Services\Tmdb\Services\TmdbMovieService;
+use App\Services\Tmdb\Services\TmdbGenreService;
+use App\Services\Tmdb\Services\TmdbSearchService;
+use App\Services\Tmdb\Services\TmdbImageService;
 use App\Services\Tmdb\Contracts\TmdbMovieServiceInterface;
 use App\Services\Tmdb\Contracts\TmdbGenreServiceInterface;
 use App\Services\Tmdb\Contracts\TmdbSearchServiceInterface;

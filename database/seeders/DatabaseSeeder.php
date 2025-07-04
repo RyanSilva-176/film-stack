@@ -26,5 +26,9 @@ class DatabaseSeeder extends Seeder
         User::factory(5)->create();
         User::factory(3)->oauth('google')->create();
         User::factory(3)->oauth('microsoft')->create();
+
+        $this->call([
+            MovieListSeeder::class,
+        ]);
     }
 }

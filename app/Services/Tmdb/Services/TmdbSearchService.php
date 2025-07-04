@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Services\Tmdb;
+namespace App\Services\Tmdb\Services;
 
 use App\Services\Tmdb\Contracts\TmdbSearchServiceInterface;
 use App\Services\Tmdb\Contracts\TmdbGenreServiceInterface;

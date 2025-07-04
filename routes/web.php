@@ -10,7 +10,7 @@ Route::get('/', function () {
 
 Route::get('dashboard', function () {
     return Inertia::render('Dashboard');
-})->middleware(['auth', 'verified'])->name('dashboard');
+})->middleware(['auth', 'verified', 'web'])->name('dashboard');
 
 
 Route::get('/auth/{provider}/redirect', [SocialiteController::class, 'create'])->where('provider', 'google');

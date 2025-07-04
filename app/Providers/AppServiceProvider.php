@@ -2,7 +2,11 @@
 
 namespace App\Providers;
 
+use App\Services\Movie\Contracts\MovieListServiceInterface;
+use App\Services\Movie\MovieListService;
 use Illuminate\Support\ServiceProvider;
+use App\Models\User;
+use App\Observers\UserObserver;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -11,7 +15,7 @@ class AppServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
-        //
+        $this->app->bind(MovieListServiceInterface::class, MovieListService::class);
     }
 
     /**
@@ -19,6 +23,6 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
-        //
+        User::observe(UserObserver::class);
     }
 }

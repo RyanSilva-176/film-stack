@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Services;
+namespace App\Services\Tmdb;
 
 use App\Services\Tmdb\Contracts\TmdbMovieServiceInterface;
 use App\Services\Tmdb\Contracts\TmdbGenreServiceInterface;
