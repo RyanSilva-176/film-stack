@@ -75,7 +75,7 @@ const handleFooterLinkClick = (section: string) => {
 onMounted(async () => {
   try {
     await moviesStore.initializeData();
-  } catch (err) {
+  } catch {
     error('Erro ao carregar dados', 'Não foi possível carregar os filmes. Tente novamente.');
   } finally {
     isLoading.value = false;

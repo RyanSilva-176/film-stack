@@ -46,8 +46,10 @@ import {
     faCheck,
     faMagnifyingGlass,
     faTachometerAlt,
-    faEllipsisH
+    faEllipsisH,
 } from '@fortawesome/free-solid-svg-icons';
+
+import {faGoogle} from '@fortawesome/free-brands-svg-icons';
 
 library.add(
     faPlay,
@@ -84,7 +86,8 @@ library.add(
     faCheck,
     faMagnifyingGlass,
     faTachometerAlt,
-    faEllipsisH
+    faEllipsisH,
+    faGoogle
 );
 
 const appName = import.meta.env.VITE_APP_NAME || 'Laravel';
