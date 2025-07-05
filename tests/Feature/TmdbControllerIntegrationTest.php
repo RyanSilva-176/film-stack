@@ -2,11 +2,9 @@
 
 namespace Tests\Feature;
 
-use Illuminate\Foundation\Testing\RefreshDatabase;
-use Illuminate\Support\Facades\Http;
 use Tests\TestCase;
-use App\Services\TmdbService;
 use App\Models\User;
+use App\Services\Tmdb\TmdbService;
 
 class TmdbControllerIntegrationTest extends TestCase
 {

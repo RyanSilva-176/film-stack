@@ -5,15 +5,19 @@ import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import ToastContainer from '@/components/ui/ToastContainer.vue';
 import AuthBase from '@/layouts/AuthLayout.vue';
 import { Head, useForm } from '@inertiajs/vue3';
 import { LoaderCircle } from 'lucide-vue-next';
+import { useToast } from '@/composables/useToastSystem';
 
 const props = defineProps<{
     status?: string;
     canResetPassword: boolean;
     hasGoogleAuth: boolean;
 }>();
+
+const { success, error } = useToast();
 
 const form = useForm({
     email: '',
@@ -23,6 +27,14 @@ const form = useForm({
 
 const submit = () => {
     form.post(route('login'), {
+        onSuccess: () => {
+            success('Login realizado', 'Bem-vindo de volta!');
+        },
+        onError: () => {
+            if (form.errors.email || form.errors.password) {
+                error('Erro no login', 'Verifique suas credenciais e tente novamente.');
+            }
+        },
         onFinish: () => form.reset('password'),
     });
 };
@@ -133,5 +145,8 @@ const handleSocialLogin = (provider: string) => {
                 <TextLink :href="route('register')" :tabindex="5">Sign up</TextLink>
             </div>
         </form>
+
+        <!-- Toast Notifications -->
+        <ToastContainer />
     </AuthBase>
 </template>

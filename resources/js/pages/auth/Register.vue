@@ -4,9 +4,13 @@ import TextLink from '@/components/TextLink.vue';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import ToastContainer from '@/components/ui/ToastContainer.vue';
 import AuthBase from '@/layouts/AuthLayout.vue';
 import { Head, useForm } from '@inertiajs/vue3';
 import { LoaderCircle } from 'lucide-vue-next';
+import { useToast } from '@/composables/useToastSystem';
+
+const { success, error } = useToast();
 
 const form = useForm({
     name: '',
@@ -17,6 +21,14 @@ const form = useForm({
 
 const submit = () => {
     form.post(route('register'), {
+        onSuccess: () => {
+            success('Conta criada', 'Sua conta foi criada com sucesso!');
+        },
+        onError: () => {
+            if (Object.keys(form.errors).length > 0) {
+                error('Erro no cadastro', 'Verifique os dados informados e tente novamente.');
+            }
+        },
         onFinish: () => form.reset('password', 'password_confirmation'),
     });
 };
@@ -79,5 +91,8 @@ const submit = () => {
                 <TextLink :href="route('login')" class="underline underline-offset-4" :tabindex="6">Log in</TextLink>
             </div>
         </form>
+
+        <!-- Toast Notifications -->
+        <ToastContainer />
     </AuthBase>
 </template>

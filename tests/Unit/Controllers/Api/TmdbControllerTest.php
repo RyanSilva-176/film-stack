@@ -4,7 +4,7 @@ namespace Tests\Unit\Controllers\Api;
 
 use Tests\TestCase;
 use App\Http\Controllers\Api\TmdbController;
-use App\Services\TmdbService;
+use App\Services\Tmdb\TmdbService;
 use Symfony\Component\HttpKernel\Exception\HttpException;
 use RuntimeException;
 
