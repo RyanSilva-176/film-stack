@@ -23,6 +23,9 @@ Route::prefix('public/tmdb')->group(function () {
         ->name('api.public.tmdb.movies.trending');
     Route::get('/movies/popular', [TmdbController::class, 'getPopularMovies'])
         ->name('api.public.tmdb.movies.popular');
+    Route::get('/movies/{movieId}', [TmdbController::class, 'getMovieDetails'])
+        ->name('api.public.tmdb.movies.details')
+        ->where('movieId', '[0-9]+');
     Route::get('/genres', [TmdbController::class, 'getMovieGenres'])
         ->name('api.public.tmdb.genres');
 });
