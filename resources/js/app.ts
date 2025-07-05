@@ -45,7 +45,8 @@ import {
     faLock,
     faCheck,
     faMagnifyingGlass,
-    faTachometerAlt
+    faTachometerAlt,
+    faEllipsisH
 } from '@fortawesome/free-solid-svg-icons';
 
 library.add(
@@ -82,7 +83,8 @@ library.add(
     faLock,
     faCheck,
     faMagnifyingGlass,
-    faTachometerAlt
+    faTachometerAlt,
+    faEllipsisH
 );
 
 const appName = import.meta.env.VITE_APP_NAME || 'Laravel';

@@ -12,6 +12,10 @@ Route::get('dashboard', function () {
     return Inertia::render('Dashboard');
 })->middleware(['auth', 'verified', 'web'])->name('dashboard');
 
+Route::get('ui', function () {
+    return Inertia::render('ButtonDemo');
+})->middleware(['web'])->name('ui');
+
 
 Route::get('/auth/{provider}/redirect', [SocialiteController::class, 'create'])->where('provider', 'google');
 

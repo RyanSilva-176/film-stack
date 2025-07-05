@@ -13,7 +13,7 @@ import Button from '@/components/ui/Button.vue';
 import type { Movie } from '@/types/movies';
 
 const moviesStore = useMoviesStore();
-const { success, error } = useToast();
+const { success, error, info } = useToast();
 
 const isLoading = ref(true);
 const isMobileMenuOpen = ref(false);
@@ -34,6 +34,16 @@ const handleMovieClick = (movie: Movie) => {
 const handleAddToList = (movie: Movie) => {
   success('Adicionado à lista', `${movie.title} foi adicionado à sua lista`);
   // TODO: Implementar adição à lista do usuário
+};
+
+const handleMovieDetails = (movie: Movie) => {
+  info('Detalhes do filme', `Exibindo detalhes de: ${movie.title}`);
+  // TODO: Implementar navegação para página de detalhes
+};
+
+const handleMoreOptions = (movie: Movie) => {
+  info('Mais opções', `Opções disponíveis para: ${movie.title}`);
+  // TODO: Implementar menu de opções (compartilhar, avaliar, etc.)
 };
 
 const handleExploreMovies = () => {
@@ -159,7 +169,9 @@ onMounted(async () => {
           :loading="moviesStore.loading.trending"
           size="medium"
           @movie-click="handleMovieClick"
+          @movie-details="handleMovieDetails"
           @add-to-list="handleAddToList"
+          @more-options="handleMoreOptions"
         />
       </section>
 
@@ -172,7 +184,9 @@ onMounted(async () => {
           :loading="moviesStore.loading.popular"
           size="medium"
           @movie-click="handleMovieClick"
+          @movie-details="handleMovieDetails"
           @add-to-list="handleAddToList"
+          @more-options="handleMoreOptions"
         />
       </section>
 

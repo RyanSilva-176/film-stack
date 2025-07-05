@@ -114,7 +114,7 @@
       </section>
 
       <!-- Demo Interativo -->
-      <section>
+      <section class="mb-4">
         <h2 class="mb-6 text-2xl font-bold text-red-500">🧪 Demo Interativo</h2>
         <div class="rounded-lg bg-gray-900 p-6">
           <h3 class="mb-6 text-lg font-medium">Personalize um Botão</h3>

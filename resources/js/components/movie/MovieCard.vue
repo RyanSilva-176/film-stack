@@ -1,7 +1,7 @@
 <template>
     <div
-        class="movie-card group relative cursor-pointer overflow-hidden rounded-lg bg-gray-900 transition-shadow duration-300"
-        :class="[size === 'small' ? 'w-40 sm:w-48' : 'w-48 sm:w-56 md:w-64', loading ? 'animate-pulse' : '']"
+        class="movie-card group relative cursor-pointer overflow-hidden rounded-lg bg-gray-900 transition-shadow duration-300 w-full h-full flex flex-col"
+        :class="[loading ? 'animate-pulse' : '']"
         @click="handleClick"
         ref="cardRef"
         @mouseenter="handleMouseEnter"
@@ -39,12 +39,45 @@
                 {{ movie.vote_average.toFixed(1) }}
             </div>
 
-            <!-- Hover Overlay -->
+            <!-- Mobile Action Buttons -->
             <div
-                class="absolute inset-0 bg-gradient-to-t from-black/90 via-transparent to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100"
+                class="absolute inset-x-0 bottom-0 flex justify-center gap-2 bg-gradient-to-t from-black/80 via-black/30 to-transparent p-3 md:hidden"
+            >
+                <Button
+                    variant="primary"
+                    size="sm"
+                    icon="info-circle"
+                    rounded="full"
+                    @click.stop="handleDetailsClick"
+                    aria-label="Ver detalhes"
+                    class="h-10 w-10 shadow-lg"
+                />
+                <Button
+                    variant="ghost"
+                    size="sm"
+                    icon="plus"
+                    rounded="full"
+                    @click.stop="handleAddToListClick"
+                    aria-label="Adicionar à lista"
+                    class="h-10 w-10 shadow-lg"
+                />
+                <Button
+                    variant="ghost"
+                    size="sm"
+                    icon="ellipsis-h"
+                    rounded="full"
+                    @click.stop="handleMoreOptionsClick"
+                    aria-label="Mais opções"
+                    class="h-10 w-10 shadow-lg"
+                />
+            </div>
+
+            <!-- Desktop Hover Overlay -->
+            <div
+                class="absolute inset-0 hidden bg-gradient-to-t from-black/90 via-transparent to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100 md:block"
                 ref="overlayRef"
             >
-                <!-- Action Buttons -->
+                <!-- Desktop Action Buttons -->
                 <div class="absolute right-4 bottom-4 left-4 flex flex-col gap-2">
                     <Button
                         variant="primary"
@@ -53,27 +86,36 @@
                         label="Ver Detalhes"
                         full-width
                         rounded="md"
-                        @click="handleClick"
+                        @click.stop="handleDetailsClick"
                         aria-label="Ver detalhes do filme"
                     />
-                    <Button
-                        variant="secondary"
-                        size="sm"
-                        icon="bookmark"
-                        label="Salvar"
-                        full-width
-                        rounded="md"
-                        @click="$emit('addToList', movie)"
-                        aria-label="Adicionar à lista"
-                    />
+                    <div class="flex justify-center gap-2">
+                        <Button
+                            variant="ghost"
+                            size="sm"
+                            icon="plus"
+                            label="Adicionar"
+                            rounded="md"
+                            @click.stop="handleAddToListClick"
+                            aria-label="Adicionar à lista"
+                        />
+                        <Button
+                            variant="ghost"
+                            size="sm"
+                            icon="ellipsis-h"
+                            rounded="md"
+                            @click.stop="handleMoreOptionsClick"
+                            aria-label="Mais opções"
+                        />
+                    </div>
                 </div>
             </div>
         </div>
 
         <!-- Movie Info -->
-        <div v-if="showDetails" class="space-y-2 p-3">
+        <div v-if="showDetails" class="flex-grow space-y-2 p-3 flex flex-col">
             <!-- Title -->
-            <h3 class="line-clamp-2 text-sm font-semibold text-white transition-colors group-hover:text-red-400">
+            <h3 class="line-clamp-2 text-sm font-semibold text-white transition-colors group-hover:text-red-400 min-h-[2.5rem] flex items-start">
                 {{ movie.title }}
             </h3>
 
@@ -90,7 +132,7 @@
             </div>
 
             <!-- Overview -->
-            <p v-if="movie.overview" class="line-clamp-3 text-xs text-gray-400">
+            <p v-if="movie.overview" class="line-clamp-3 text-xs text-gray-400 flex-grow">
                 {{ movie.overview }}
             </p>
         </div>
@@ -98,12 +140,12 @@
 </template>
 
 <script setup lang="ts">
+import Button from '@/components/ui/Button.vue';
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome';
 import { gsap } from 'gsap';
 import { computed, onMounted, ref } from 'vue';
-import { useMoviesStore } from '../../stores/movies';
-import type { Movie } from '../../types/movies';
-import Button from '@/components/ui/Button.vue';
+import { useMoviesStore } from '@/stores/movies';
+import type { Movie } from '@/types/movies';
 
 interface Props {
     movie: Movie;
@@ -124,20 +166,19 @@ const props = withDefaults(defineProps<Props>(), {
 
 const emit = defineEmits<{
     click: [movie: Movie];
+    details: [movie: Movie];
     addToList: [movie: Movie];
+    moreOptions: [movie: Movie];
 }>();
 
-// Store
 const moviesStore = useMoviesStore();
 
-// Refs
 const cardRef = ref<HTMLElement>();
 const imageRef = ref<HTMLImageElement>();
 const overlayRef = ref<HTMLElement>();
 const imageError = ref(false);
 const imageLoaded = ref(false);
 
-// Computed
 const releaseYear = computed(() => {
     if (!props.movie.release_date) return 'N/A';
     return new Date(props.movie.release_date).getFullYear();
@@ -148,9 +189,20 @@ const movieGenres = computed(() => {
     return moviesStore.getGenreNames(props.movie.genre_ids);
 });
 
-// Methods
 const handleClick = () => {
     emit('click', props.movie);
+};
+
+const handleDetailsClick = () => {
+    emit('details', props.movie);
+};
+
+const handleAddToListClick = () => {
+    emit('addToList', props.movie);
+};
+
+const handleMoreOptionsClick = () => {
+    emit('moreOptions', props.movie);
 };
 
 const handleMouseEnter = () => {
@@ -185,7 +237,6 @@ const handleMouseLeave = () => {
     }
 };
 
-// Lifecycle
 onMounted(() => {
     if (cardRef.value) {
         gsap.fromTo(
@@ -198,7 +249,7 @@ onMounted(() => {
                 opacity: 1,
                 y: 0,
                 duration: 0.5,
-                delay: Math.random() * 0.3, // Random delay for stagger effect
+                delay: Math.random() * 0.3,
             },
         );
     }
