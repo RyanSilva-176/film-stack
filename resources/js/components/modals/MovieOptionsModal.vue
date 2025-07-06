@@ -37,7 +37,7 @@
                                 :icon="['fas', 'bookmark']"
                                 :class="localIsInWatchlist ? 'text-blue-500' : 'text-sidebar-accent-foreground'"
                             />
-                            {{ localIsInWatchlist ? 'Remover da Lista da Watchlist' : 'Adicionar à Lista da Watchlist' }}
+                            {{ localIsInWatchlist ? 'Remover da Watchlist' : 'Adicionar à Watchlist' }}
                             <Loader2 v-if="loading.watchlist" class="ml-auto h-4 w-4 animate-spin" />
                         </span>
                     </Button>
@@ -79,6 +79,7 @@
                                 :class="isMovieInCustomList(list) ? 'text-purple-500' : 'text-sidebar-accent-foreground'" 
                             />
                             {{ isMovieInCustomList(list) ? 'Remover de' : 'Adicionar à' }} "{{ list.name }}"
+                            <span class="flex items-center gap-2">
                             <span
                                 v-if="list.movies_count > 0"
                                 class="ml-auto rounded-full bg-sidebar-accent px-2 py-1 text-xs text-sidebar-accent-foreground"
@@ -86,6 +87,7 @@
                                 {{ list.movies_count }}
                             </span>
                             <Loader2 v-if="loading.custom" class="ml-auto h-4 w-4 animate-spin" />
+                            </span>
                         </span>
                     </Button>
                 </div>
@@ -113,11 +115,19 @@
             </div>
         </DialogContent>
     </Dialog>
+
+    <!-- Movie Details Sidebar -->
+    <MovieDetailsSidebar 
+        :is-open="sidebarOpen" 
+        :movie="selectedMovie" 
+        @update:open="sidebarOpen = $event" 
+    />
 </template>
 
 <script setup lang="ts">
 import Button from '@/components/ui/Button.vue';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import MovieDetailsSidebar from '@/components/movie/MovieDetailsSidebar.vue';
 import { useToast } from '@/composables/useToastSystem';
 import type { MovieList } from '@/stores/userLists';
 import { useUserListsStore } from '@/stores/userLists';
@@ -150,6 +160,8 @@ const { success, error: showError } = useToast();
 const localIsLiked = ref(false);
 const localIsInWatchlist = ref(false);
 const localIsWatched = ref(false);
+const sidebarOpen = ref(false);
+const selectedMovie = ref<Movie | null>(null);
 
 watch(
     () => props.movie,
@@ -161,7 +173,6 @@ watch(
     { immediate: true },
 );
 
-// Watch for changes in lists to update states reactively
 watch(
     () => [userListsStore.getLikedList?.items, userListsStore.getWatchlist?.items, userListsStore.getWatchedList?.items],
     () => {
@@ -172,14 +183,11 @@ watch(
     { deep: true }
 );
 
-// Helper function to update movie states
+
 const updateMovieStates = (movie: Movie) => {
-    // Reset local states
     localIsLiked.value = false;
     localIsInWatchlist.value = false;
     localIsWatched.value = false;
-
-    // Check actual states from store using the items property
     const likedList = userListsStore.getLikedList;
     const watchlist = userListsStore.getWatchlist;
     const watchedList = userListsStore.getWatchedList;
@@ -205,7 +213,11 @@ const handleCreateList = () => {
 };
 
 const handleMovieDetails = () => {
-    emit('movie-details');
+    if (props.movie) {
+        selectedMovie.value = props.movie;
+        sidebarOpen.value = true;
+        emit('update:open', false);
+    }
 };
 
 const loading = ref({
@@ -296,7 +308,7 @@ const handleMarkWatched = async () => {
     }
 };
 
-// Helper function to check if movie is in a custom list
+
 const isMovieInCustomList = (list: MovieList): boolean => {
     if (!props.movie) return false;
     const items = list.items || list.movies || [];
@@ -306,7 +318,6 @@ const isMovieInCustomList = (list: MovieList): boolean => {
 const handleToggleCustomList = async (list: MovieList) => {
     if (!props.movie) return;
 
-    // Check if movie is in this specific custom list using items/movies
     const items = list.items || list.movies || [];
     const isInList = items.some(item => item.tmdb_movie_id === props.movie!.id);
 
@@ -326,7 +337,6 @@ const handleToggleCustomList = async (list: MovieList) => {
             }
         }
     } catch (err) {
-        // Revert optimistic update
         if (isInList) {
             list.movies_count++;
         } else {

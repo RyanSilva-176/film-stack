@@ -97,6 +97,7 @@
                             :list-type="pageConfig.listType"
                             :selection-mode="selectionMode"
                             :selected="selectedMovies.includes(movieItem.tmdb_movie_id)"
+                            :view-mode="viewMode"
                             @click="handleMovieClick"
                             @details="handleMovieDetails"
                             @remove-from-list="handleRemoveFromList"
@@ -108,63 +109,24 @@
                     </div>
 
                     <!-- List View -->
-                    <div v-else class="space-y-4">
-                        <div v-for="movieItem in movies" :key="movieItem.id" class="flex items-center gap-4 rounded-lg bg-gray-900 p-4">
-                            <div v-if="selectionMode" class="flex-shrink-0">
-                                <input
-                                    type="checkbox"
-                                    :checked="selectedMovies.includes(movieItem.tmdb_movie_id)"
-                                    @change="handleSelectionChange(movieItem.movie!, !selectedMovies.includes(movieItem.tmdb_movie_id))"
-                                    :class="`h-5 w-5 ${pageConfig.checkboxColor} rounded border-gray-600 bg-gray-800 ${pageConfig.checkboxFocusColor} focus:ring-2`"
-                                />
-                            </div>
-
-                            <div class="h-24 w-16 flex-shrink-0">
-                                <img
-                                    v-if="movieItem.movie?.poster_url"
-                                    :src="movieItem.movie.poster_url"
-                                    :alt="movieItem.movie.title"
-                                    class="h-full w-full rounded object-cover"
-                                />
-                                <div v-else class="flex h-full w-full items-center justify-center rounded bg-gray-800">
-                                    <font-awesome-icon icon="film" class="text-gray-400" />
-                                </div>
-                            </div>
-
-                            <div class="min-w-0 flex-1">
-                                <h3 class="truncate font-semibold text-white">{{ movieItem.movie?.title }}</h3>
-                                <p class="text-sm text-gray-400">
-                                    {{ movieItem.movie?.release_date ? new Date(movieItem.movie.release_date).getFullYear() : 'N/A' }}
-                                </p>
-                                <p class="text-sm text-gray-400">Adicionado em {{ formatDate(movieItem.created_at) }}</p>
-                            </div>
-
-                            <div class="flex items-center gap-2">
-                                <Button variant="ghost" size="sm" icon="info-circle" @click="handleMovieDetails(movieItem.movie!)" />
-                                <Button
-                                    v-if="pageConfig.showMarkWatchedButton"
-                                    variant="ghost"
-                                    size="sm"
-                                    icon="check"
-                                    @click="handleMarkWatched(movieItem.movie!)"
-                                    class="text-green-400 hover:bg-green-400/20"
-                                />
-                                <Button
-                                    variant="ghost"
-                                    size="sm"
-                                    icon="exchange-alt"
-                                    @click="handleMoveToList(movieItem.movie!)"
-                                    class="text-blue-400 hover:bg-blue-400/20"
-                                />
-                                <Button
-                                    variant="ghost"
-                                    size="sm"
-                                    icon="trash"
-                                    @click="handleRemoveFromList(movieItem.movie!)"
-                                    class="text-red-400 hover:bg-red-400/20"
-                                />
-                            </div>
-                        </div>
+                    <div v-else class="space-y-3">
+                        <MovieListCard
+                            v-for="movieItem in movies"
+                            :key="movieItem.id"
+                            :movie="movieItem.movie!"
+                            :list-item="movieItem"
+                            :list-type="pageConfig.listType"
+                            :selection-mode="selectionMode"
+                            :selected="selectedMovies.includes(movieItem.tmdb_movie_id)"
+                            :view-mode="viewMode"
+                            @click="handleMovieClick"
+                            @details="handleMovieDetails"
+                            @remove-from-list="handleRemoveFromList"
+                            @mark-watched="handleMarkWatched"
+                            @move-to-list="handleMoveToList"
+                            @show-options="handleShowOptions"
+                            @selection-change="handleSelectionChange"
+                        />
                     </div>
                 </div>
 
@@ -229,7 +191,6 @@ import MovieOptionsModal from '@/components/modals/MovieOptionsModal.vue';
 import MovieDetailsSidebar from '@/components/movie/MovieDetailsSidebar.vue';
 import MovieListCard from '@/components/movie/MovieListCard.vue';
 import MovieListFilters from '@/components/movie/MovieListFilters.vue';
-import Button from '@/components/ui/Button.vue';
 import { useToast } from '@/composables/useToastSystem';
 import AppLayout from '@/layouts/AppLayout.vue';
 import { useMoviesStore } from '@/stores/movies';
@@ -371,10 +332,6 @@ const resultsSummaryText = computed(() => {
 
     return `Mostrando ${showing} de ${total} filmes`;
 });
-
-const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('pt-BR');
-};
 
 const handleMovieClick = (movie: Movie) => {
     if (!selectionMode.value) {

@@ -42,14 +42,9 @@
 
     <meta name="description"
         content="Descubra, organize e acompanhe seus filmes favoritos com o Film Stack. Explore milhares de filmes e crie suas listas personalizadas." />
-    <meta name="keywords"
-        content="filmes, cinema, listas, TMDB, streaming, entretenimento, assistir filmes, catálogo de filmes, filmes online, organização de filmes, favoritos, lançamentos" />
-    <meta name="author" content="FilmStack" />
-    <meta name="robots" content="index, follow" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <link rel="canonical" href="{{ url()->current() }}" />
-
+    <meta name="keywords" content="filmes, cinema, listas, TMDB, streaming, entretenimento" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
+    
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="anonymous" />
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap"
         rel="stylesheet" />
@@ -61,8 +56,6 @@
     <meta property="og:description"
         content="Descubra, organize e acompanhe seus filmes favoritos com o Film Stack. Explore milhares de filmes e crie suas listas personalizadas." />
     <meta property="og:image" content="{{ asset('images/og-image.png') }}" />
-    <meta property="og:site_name" content="FilmStack" />
-    <meta property="og:locale" content="pt_BR" />
 
     <!-- Twitter -->
     <meta name="twitter:card" content="summary_large_image" />
@@ -71,8 +64,6 @@
     <meta name="twitter:description"
         content="Descubra, organize e acompanhe seus filmes favoritos com o Film Stack. Explore milhares de filmes e crie suas listas personalizadas." />
     <meta name="twitter:image" content="{{ asset('images/og-image.png') }}" />
-    <meta name="twitter:site" content="@FilmStack" />
-    <meta name="twitter:creator" content="@FilmStack" />
 
     @routes
     @vite(['resources/js/app.ts', "resources/js/pages/{$page['component']}.vue"])

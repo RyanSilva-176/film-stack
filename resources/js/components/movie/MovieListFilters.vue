@@ -35,7 +35,7 @@
                         class="px-3 py-2 bg-gray-800 border border-gray-700 rounded-lg text-white text-sm focus:outline-none focus:ring-2 focus:ring-red-500"
                     >
                         <option value="">Todos os gêneros</option>
-                        <option v-for="genre in (genres || availableGenres)" :key="genre.id" :value="genre.id">
+                        <option v-for="genre in availableGenres" :key="genre.id" :value="genre.id">
                             {{ genre.name }}
                         </option>
                     </select>
@@ -60,20 +60,31 @@
                         @change="handleFilterChange"
                         class="px-3 py-2 bg-gray-800 border border-gray-700 rounded-lg text-white text-sm focus:outline-none focus:ring-2 focus:ring-red-500"
                     >
-                        <option value="popularity.desc">Mais Populares</option>
-                        <option value="popularity.asc">Menos Populares</option>
-                        <option value="vote_average.desc">Melhor Avaliados</option>
-                        <option value="vote_average.asc">Pior Avaliados</option>
-                        <option value="release_date.desc">Mais Recentes</option>
-                        <option value="release_date.asc">Mais Antigos</option>
-                        <option value="original_title.asc">A-Z</option>
-                        <option value="original_title.desc">Z-A</option>
-                        <option value="added_date_desc">Adicionado recentemente</option>
-                        <option value="added_date_asc">Adicionado há mais tempo</option>
-                        <option value="title_asc">Título (A-Z)</option>
-                        <option value="title_desc">Título (Z-A)</option>
-                        <option v-if="showWatchedSort" value="watched_date_desc">Assistido recentemente</option>
-                        <option v-if="showWatchedSort" value="watched_date_asc">Assistido há mais tempo</option>
+                        <!-- Search-specific sort options -->
+                        <template v-if="showSearchSort">
+                            <option value="popularity.desc">Popularidade (Maior)</option>
+                            <option value="popularity.asc">Popularidade (Menor)</option>
+                            <option value="vote_average.desc">Avaliação (Maior)</option>
+                            <option value="vote_average.asc">Avaliação (Menor)</option>
+                            <option value="release_date.desc">Lançamento (Mais Recente)</option>
+                            <option value="release_date.asc">Lançamento (Mais Antigo)</option>
+                            <option value="title.asc">Título (A-Z)</option>
+                            <option value="title.desc">Título (Z-A)</option>
+                        </template>
+                        
+                        <!-- List-specific sort options -->
+                        <template v-else>
+                            <option value="added_date_desc">Adicionado recentemente</option>
+                            <option value="added_date_asc">Adicionado há mais tempo</option>
+                            <option value="title_asc">Título (A-Z)</option>
+                            <option value="title_desc">Título (Z-A)</option>
+                            <option value="rating_desc">Melhor Avaliados</option>
+                            <option value="rating_asc">Pior Avaliados</option>
+                            <option value="release_date_desc">Mais Recentes</option>
+                            <option value="release_date_asc">Mais Antigos</option>
+                            <option v-if="showWatchedSort" value="watched_date_desc">Assistido recentemente</option>
+                            <option v-if="showWatchedSort" value="watched_date_asc">Assistido há mais tempo</option>
+                        </template>
                     </select>
 
                     <!-- View Toggle -->
@@ -103,71 +114,66 @@
                     </div>
 
                     <!-- Selection Toggle -->
-                    <button
+                    <Button
                         @click="toggleSelectionMode"
-                        :class="[
-                            'px-3 py-2 rounded-lg text-sm transition-colors border',
-                            selectionMode
-                                ? 'bg-red-600 text-white border-red-600'
-                                : 'bg-gray-800 text-gray-400 border-gray-700 hover:text-white hover:bg-gray-700'
-                        ]"
-                    >
-                        <FontAwesomeIcon icon="fa-solid fa-check-square" class="mr-1" />
-                        {{ selectionMode ? 'Cancelar' : 'Selecionar' }}
-                    </button>
+                        :variant="selectionMode ? 'destructive' : 'secondary'"
+                        icon="check-square"
+                        size="sm"
+                        :label="selectionMode ? 'Cancelar' : 'Selecionar'"
+                    />
                 </div>
             </div>
 
             <!-- Selection Actions -->
             <div v-if="selectionMode" class="mt-4 p-3 bg-gray-800 rounded-lg">
-                <div class="flex flex-wrap gap-2 items-center justify-between">
-                    <div class="flex items-center gap-4">
-                        <button
-                            @click="selectAll"
-                            class="text-sm text-blue-400 hover:text-blue-300"
-                        >
-                            Selecionar todos ({{ totalCount }})
-                        </button>
-                        <button
-                            @click="clearSelection"
-                            class="text-sm text-gray-400 hover:text-gray-300"
-                        >
-                            Limpar seleção
-                        </button>
-                        <span class="text-sm text-gray-400">
-                            {{ selectedCount }} de {{ totalCount }} selecionados
-                        </span>
-                    </div>
+                <div class="flex flex-wrap gap-2 items-center justify-between">                <div class="flex items-center gap-4">
+                    <Button
+                        @click="selectAll"
+                        variant="ghost"
+                        size="sm"
+                        :label="`Selecionar todos (${totalCount})`"
+                    />
+                    <Button
+                        @click="clearSelection"
+                        variant="ghost"
+                        size="sm"
+                        label="Limpar seleção"
+                    />
+                    <span class="text-sm text-gray-400">
+                        {{ selectedCount }} de {{ totalCount }} selecionados
+                    </span>
+                </div>
 
-                    <div class="flex flex-wrap gap-2">
-                        <button
-                            v-if="!isWatchedList"
-                            @click="handleBulkMarkWatched"
-                            :disabled="selectedCount === 0 || bulkLoading"
-                            class="px-3 py-1 bg-green-600 text-white rounded text-sm hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed"
-                        >
-                            <FontAwesomeIcon icon="check" class="mr-1" />
-                            Marcar como assistido
-                        </button>
-                        
-                        <button
-                            @click="handleBulkMove"
-                            :disabled="selectedCount === 0 || bulkLoading"
-                            class="px-3 py-1 bg-blue-600 text-white rounded text-sm hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
-                        >
-                            <FontAwesomeIcon icon="exchange-alt" class="mr-1" />
-                            Mover para lista
-                        </button>
-                        
-                        <button
-                            @click="handleBulkRemove"
-                            :disabled="selectedCount === 0 || bulkLoading"
-                            class="px-3 py-1 bg-red-600 text-white rounded text-sm hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed"
-                        >
-                            <FontAwesomeIcon icon="trash" class="mr-1" />
-                            Remover da lista
-                        </button>
-                    </div>
+                <div class="flex flex-wrap gap-2">
+                    <Button
+                        v-if="!isWatchedList"
+                        @click="handleBulkMarkWatched"
+                        :disabled="selectedCount === 0 || bulkLoading"
+                        variant="success"
+                        size="sm"
+                        icon="check"
+                        label="Marcar como assistido"
+                    />
+                    
+                    <Button
+                        @click="handleBulkMove"
+                        :disabled="selectedCount === 0 || bulkLoading"
+                        variant="primary"
+                        size="sm"
+                        icon="exchange-alt"
+                        label="Mover para lista"
+                    />
+                    
+                    <Button
+                        v-if="showBulkRemove"
+                        @click="confirmBulkRemove"
+                        :disabled="selectedCount === 0 || bulkLoading"
+                        variant="destructive"
+                        size="sm"
+                        icon="trash"
+                        label="Remover da lista"
+                    />
+                </div>
                 </div>
             </div>
 
@@ -176,11 +182,27 @@
                 {{ resultsSummaryText }}
             </div>
         </div>
+
+        <!-- Confirm Bulk Remove Modal -->
+        <ConfirmModal
+            :is-open="showConfirmRemoveModal"
+            variant="danger"
+            :title="`Remover ${selectedCount} filme${selectedCount > 1 ? 's' : ''}?`"
+            :message="`Tem certeza que deseja remover ${selectedCount} filme${selectedCount > 1 ? 's' : ''} da lista? Esta ação não pode ser desfeita.`"
+            confirm-label="Remover"
+            confirm-icon="trash"
+            :loading="bulkLoading"
+            @update:open="showConfirmRemoveModal = $event"
+            @confirm="handleConfirmedBulkRemove"
+            @cancel="showConfirmRemoveModal = false"
+        />
     </div>
 </template>
 
 <script setup lang="ts">
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome';
+import Button from '@/components/ui/Button.vue';
+import ConfirmModal from '@/components/modals/ConfirmModal.vue';
 import { ref, watch, computed } from 'vue';
 
 // Simple debounce implementation
@@ -204,6 +226,7 @@ interface Props {
     showGenre?: boolean;
     showYear?: boolean;
     showSort?: boolean;
+    showSearchSort?: boolean;
     search?: string;
     genreFilter?: string;
     sortBy?: string;
@@ -217,6 +240,7 @@ interface Props {
     bulkLoading?: boolean;
     showResultsSummary?: boolean;
     resultsSummaryText?: string;
+    showBulkRemove?: boolean;
 }
 
 interface Emits {
@@ -241,6 +265,7 @@ const props = withDefaults(defineProps<Props>(), {
     showGenre: true,
     showYear: false,
     showSort: true,
+    showSearchSort: false,
     search: '',
     genreFilter: '',
     sortBy: 'added_date_desc',
@@ -254,6 +279,7 @@ const props = withDefaults(defineProps<Props>(), {
     bulkLoading: false,
     showResultsSummary: false,
     resultsSummaryText: '',
+    showBulkRemove: true,
 });
 
 const emit = defineEmits<Emits>();
@@ -264,7 +290,9 @@ const localSortBy = ref(props.currentFilters?.sort || props.sortBy || 'popularit
 const localViewMode = ref(props.viewMode);
 const localYear = ref(props.currentFilters?.year || '');
 
-// Generate year options
+// Modal state
+const showConfirmRemoveModal = ref(false);
+
 const yearOptions = computed(() => {
     const currentYear = new Date().getFullYear();
     const years = [];
@@ -274,7 +302,6 @@ const yearOptions = computed(() => {
     return years;
 });
 
-// Watch for external changes
 watch(() => props.search, (newValue) => {
     localSearch.value = newValue;
 });
@@ -346,7 +373,12 @@ const handleBulkMove = () => {
     emit('bulk-move');
 };
 
-const handleBulkRemove = () => {
+const confirmBulkRemove = () => {
+    showConfirmRemoveModal.value = true;
+};
+
+const handleConfirmedBulkRemove = () => {
     emit('bulk-remove');
+    showConfirmRemoveModal.value = false;
 };
 </script>

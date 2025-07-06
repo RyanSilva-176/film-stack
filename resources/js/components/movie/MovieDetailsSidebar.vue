@@ -11,12 +11,13 @@
                     ref="detailsPanel"
                 >
                     <!-- Movie Backdrop Header -->
-                    <div v-if="movieDetails?.backdrop_path" class="relative h-48 overflow-hidden">
+                    <div v-if="backdropImageUrl" class="relative h-48 overflow-hidden">
                         <img
-                            :src="`https://image.tmdb.org/t/p/w780${movieDetails.backdrop_path}`"
+                            :src="backdropImageUrl"
                             :alt="movieDetails.title"
                             class="h-full w-full object-cover"
                             loading="lazy"
+                            @error="handleBackdropError"
                         />
                         <div class="absolute inset-0 bg-gradient-to-t from-gray-900 via-gray-900/50 to-transparent" />
 
@@ -85,13 +86,22 @@
                         <!-- Movie Poster and Basic Info -->
                         <div class="flex gap-4">
                             <!-- Poster -->
-                            <div v-if="movieDetails.poster_url" class="flex-shrink-0">
-                                <img
-                                    :src="movieDetails.poster_url"
-                                    :alt="movieDetails.title"
-                                    class="h-36 w-24 rounded-lg object-cover shadow-lg"
-                                    loading="lazy"
-                                />
+                            <div class="flex-shrink-0">
+                                <div v-if="posterImageUrl" class="relative">
+                                    <img
+                                        :src="posterImageUrl"
+                                        :alt="movieDetails.title"
+                                        class="h-36 w-24 rounded-lg object-cover shadow-lg"
+                                        loading="lazy"
+                                        @error="handlePosterError"
+                                    />
+                                </div>
+                                <div v-else class="flex h-36 w-24 items-center justify-center rounded-lg bg-gray-800 shadow-lg">
+                                    <div class="text-center">
+                                        <font-awesome-icon :icon="['fas', 'film']" class="h-6 w-6 text-gray-600 mb-1" />
+                                        <p class="text-xs text-gray-500">Sem imagem</p>
+                                    </div>
+                                </div>
                             </div>
 
                             <!-- Basic Info Grid -->
@@ -244,6 +254,7 @@ import {
     faBuilding,
     faCalendar,
     faClock,
+    faFilm,
     faGlobe,
     faLock,
     faQuoteLeft,
@@ -276,6 +287,7 @@ library.add(
     faSignInAlt,
     faUserPlus,
     faRedo,
+    faFilm,
 );
 
 interface Props {
@@ -299,9 +311,38 @@ const movieDetails = ref<any>(null);
 const detailsPanel = ref<HTMLElement | null>(null);
 const showPanel = ref(false);
 
+// Image error handling
+const posterError = ref(false);
+const backdropError = ref(false);
+
 const isOpen = computed({
     get: () => props.isOpen,
     set: (value: boolean) => emit('update:open', value),
+});
+
+// Image URLs with fallbacks
+const posterImageUrl = computed(() => {
+    if (posterError.value || !movieDetails.value) return null;
+    
+    // Prioridade: poster_url > poster_path > backdrop_url > backdrop_path
+    if (movieDetails.value.poster_url) return movieDetails.value.poster_url;
+    if (movieDetails.value.poster_path) return `https://image.tmdb.org/t/p/w342${movieDetails.value.poster_path}`;
+    if (movieDetails.value.backdrop_url) return movieDetails.value.backdrop_url;
+    if (movieDetails.value.backdrop_path) return `https://image.tmdb.org/t/p/w342${movieDetails.value.backdrop_path}`;
+    
+    return null;
+});
+
+const backdropImageUrl = computed(() => {
+    if (backdropError.value || !movieDetails.value) return null;
+    
+    // Prioridade: backdrop_url > backdrop_path > poster_url > poster_path
+    if (movieDetails.value.backdrop_url) return movieDetails.value.backdrop_url;
+    if (movieDetails.value.backdrop_path) return `https://image.tmdb.org/t/p/w780${movieDetails.value.backdrop_path}`;
+    if (movieDetails.value.poster_url) return movieDetails.value.poster_url;
+    if (movieDetails.value.poster_path) return `https://image.tmdb.org/t/p/w780${movieDetails.value.poster_path}`;
+    
+    return null;
 });
 
 watch(
@@ -360,6 +401,9 @@ const loadMovieDetails = async () => {
 
     loading.value = true;
     error.value = false;
+    // Reset image errors when loading new movie
+    posterError.value = false;
+    backdropError.value = false;
 
     try {
         const response = await axios.get(`/api/public/tmdb/movies/${props.movie.id}`, {
@@ -375,6 +419,15 @@ const loadMovieDetails = async () => {
     } finally {
         loading.value = false;
     }
+};
+
+// Image error handlers
+const handlePosterError = () => {
+    posterError.value = true;
+};
+
+const handleBackdropError = () => {
+    backdropError.value = true;
 };
 
 const formatDate = (dateString: string): string => {
