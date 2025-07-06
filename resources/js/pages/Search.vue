@@ -2,12 +2,12 @@
 import { ref, computed, onMounted, watch } from 'vue';
 import { Head, router } from '@inertiajs/vue3';
 import { useSearchStore } from '@/stores/search';
+import { useMovieDetailsStore } from '@/stores/movieDetails';
 import { useUserListsStore } from '@/stores/userLists';
 import MovieCardWithTags from '@/components/movie/MovieCardWithTags.vue';
 import MovieListFilters from '@/components/movie/MovieListFilters.vue';
 import SearchResultsHeader from '@/components/search/SearchResultsHeader.vue';
 import MovieListPagination from '@/components/movie/MovieListPagination.vue';
-import MovieDetailsSidebar from '@/components/movie/MovieDetailsSidebar.vue';
 import AppLayout from '@/layouts/AppLayout.vue';
 import { Card, CardContent } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -30,11 +30,10 @@ const props = withDefaults(defineProps<Props>(), {
 });
 
 const searchStore = useSearchStore();
+const movieDetailsStore = useMovieDetailsStore();
 const userListsStore = useUserListsStore();
 
 const initialLoad = ref(true);
-const selectedMovie = ref<any>(null);
-const showMovieDetails = ref(false);
 
 const genreId = computed(() => props.genre ? Number(props.genre) : undefined);
 const yearValue = computed(() => props.year ? Number(props.year) : undefined);
@@ -116,13 +115,11 @@ const handleFilterChange = (filters: any) => {
 };
 
 const handleMovieClick = (movie: any) => {
-    selectedMovie.value = movie;
-    showMovieDetails.value = true;
+    movieDetailsStore.openSidebar(movie);
 };
 
 const handleMovieDetails = (movie: any) => {
-    selectedMovie.value = movie;
-    showMovieDetails.value = true;
+    movieDetailsStore.openSidebar(movie);
 };
 
 const handleAddToList = (movie: any) => {
@@ -272,12 +269,5 @@ onMounted(async () => {
                 </div>
             </div>
         </div>
-
-        <!-- Movie Details Sidebar -->
-        <MovieDetailsSidebar 
-            :is-open="showMovieDetails" 
-            :movie="selectedMovie"
-            @update:open="showMovieDetails = $event" 
-        />
     </AppLayout>
 </template>

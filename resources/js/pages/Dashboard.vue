@@ -4,11 +4,11 @@ import ConfirmationModal from '@/components/modals/ConfirmationModal.vue';
 import CreateEditListModal from '@/components/modals/CreateEditListModal.vue';
 import MovieOptionsModal from '@/components/modals/MovieOptionsModal.vue';
 import MovieCarousel from '@/components/movie/MovieCarousel.vue';
-import MovieDetailsSidebar from '@/components/movie/MovieDetailsSidebar.vue';
 import ToastContainer from '@/components/ui/ToastContainer.vue';
 import { useToast } from '@/composables/useToastSystem';
 import AppLayout from '@/layouts/AppLayout.vue';
 import { useMoviesStore } from '@/stores/movies';
+import { useMovieDetailsStore } from '@/stores/movieDetails';
 import { useUserListsStore, type MovieList } from '@/stores/userLists';
 import type { Movie } from '@/types/movies';
 import { Head } from '@inertiajs/vue3';
@@ -16,10 +16,8 @@ import { computed, onMounted, ref } from 'vue';
 
 const moviesStore = useMoviesStore();
 const userListsStore = useUserListsStore();
+const movieDetailsStore = useMovieDetailsStore();
 const { success, error } = useToast();
-
-const selectedMovie = ref<Movie | null>(null);
-const sidebarOpen = ref(false);
 
 const movieOptionsModalOpen = ref(false);
 const createEditListModalOpen = ref(false);
@@ -44,8 +42,7 @@ const fantasyMovies = computed(() => moviesStore.fantasyWithImages);
 
 
 const handleMovieDetails = (movie: Movie) => {
-    selectedMovie.value = movie;
-    sidebarOpen.value = true;
+    movieDetailsStore.openSidebar(movie);
 };
 
 const handleAddToList = (movie: Movie) => {
@@ -253,9 +250,6 @@ onMounted(async () => {
                     />
                 </section>
             </main>
-
-            <!-- Movie Details Sidebar -->
-            <MovieDetailsSidebar :is-open="sidebarOpen" :movie="selectedMovie" @update:open="sidebarOpen = $event" />
 
             <!-- Movie Options Modal -->
             <MovieOptionsModal
