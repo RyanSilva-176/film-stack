@@ -125,8 +125,12 @@
             </p>
 
             <!-- Genres -->
-            <div v-if="showGenres && movieGenres.length > 0" class="flex flex-wrap gap-1">
-                <span v-for="genre in movieGenres.slice(0, 2)" :key="genre" class="rounded-full bg-gray-700 px-2 py-1 text-xs text-gray-300">
+            <div v-if="showGenres && movieGenres.length > 0" class="flex gap-1 overflow-x-auto scrollbar-thin scrollbar-thumb-gray-700 scrollbar-track-transparent py-1">
+                <span
+                    v-for="genre in [...movieGenres].sort((a, b) => a.localeCompare(b))"
+                    :key="genre"
+                    class="whitespace-nowrap rounded-full bg-gray-700 px-2 py-1 text-xs text-gray-300 flex-shrink-0"
+                >
                     {{ genre }}
                 </span>
             </div>

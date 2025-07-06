@@ -10,7 +10,9 @@ use App\Services\Movie\Contracts\MovieListServiceInterface;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Inertia\Inertia;
 use Exception;
+use Inertia\Response;
 
 class MovieListController extends Controller
 {
@@ -234,5 +236,38 @@ class MovieListController extends Controller
             'success' => true,
             'message' => 'Lista deletada com sucesso',
         ]);
+    }
+
+    /**
+     ** Retorna a página de listas de filmes
+     * @return Response
+     */
+    public function likedPage(): Response
+    {
+        return Inertia::render('MovieLists/Liked');
+    }
+
+    /**
+     ** Retorna a página de listas de filmes
+     */
+    public function watchlistPage(): Response
+    {
+        return Inertia::render('MovieLists/WatchList');
+    }
+
+    /**
+     ** Retorna a página de listas de filmes
+     */
+    public function watchedPage(): Response
+    {
+        return Inertia::render('MovieLists/Watched');
+    }
+
+    /**
+     ** Retorna a página de listas de filmes
+     */
+    public function customPage(): Response
+    {
+        return Inertia::render('MovieLists/Custom');
     }
 }

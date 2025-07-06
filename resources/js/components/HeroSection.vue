@@ -46,9 +46,13 @@
                         </p>
 
                         <!-- Genres -->
-                        <div v-if="featuredGenres.length > 0" class="flex flex-wrap gap-2" ref="genresRef">
+                        <div
+                            v-if="featuredGenres.length > 0"
+                            ref="genresRef"
+                            class="scrollbar-thin scrollbar-thumb-gray-700 scrollbar-track-transparent flex gap-1 overflow-x-auto py-1"
+                        >
                             <span
-                                v-for="genre in featuredGenres.slice(0, 3)"
+                                v-for="genre in featuredGenres"
                                 :key="genre"
                                 class="rounded-full bg-white/20 px-3 py-1 text-sm text-white backdrop-blur-sm"
                             >
@@ -66,13 +70,7 @@
                                 @click="$emit('movieDetails', featuredMovie)"
                             />
 
-                            <Button
-                                variant="glass"
-                                size="lg"
-                                icon="plus"
-                                label="Minha Lista"
-                                @click="$emit('addToList', featuredMovie)"
-                            />
+                            <Button variant="glass" size="lg" icon="plus" label="Minha Lista" @click="$emit('addToList', featuredMovie)" />
                         </div>
                     </div>
 
@@ -166,7 +164,6 @@ const featuredGenres = computed(() => {
     if (!props.featuredMovie?.genre_ids) return [];
     return moviesStore.getGenreNames(props.featuredMovie.genre_ids);
 });
-
 
 const animateHeroEntry = () => {
     if (!heroRef.value) return;

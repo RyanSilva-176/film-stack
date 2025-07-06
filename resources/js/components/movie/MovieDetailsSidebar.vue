@@ -200,7 +200,10 @@
                         <div class="border-t border-gray-800" />
 
                         <!-- Login CTA -->
-                        <div class="space-y-3 rounded-lg border border-red-500/30 bg-gradient-to-r from-red-600/20 to-red-500/20 p-4">
+                        <div
+                            v-if="!page.props.auth.user"
+                            class="space-y-3 rounded-lg border border-red-500/30 bg-gradient-to-r from-red-600/20 to-red-500/20 p-4"
+                        >
                             <div class="flex items-center gap-3">
                                 <font-awesome-icon :icon="['fas', 'lock']" class="h-5 w-5 text-red-400" />
                                 <h3 class="font-medium text-white">Quer ver mais?</h3>
@@ -253,7 +256,7 @@ import {
     faUsers,
 } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome';
-import { router } from '@inertiajs/vue3';
+import { router, usePage } from '@inertiajs/vue3';
 import axios from 'axios';
 import gsap from 'gsap';
 import { computed, nextTick, ref, watch } from 'vue';
@@ -283,6 +286,8 @@ interface Props {
 interface EmitEvents {
     (e: 'update:open', value: boolean): void;
 }
+
+const page = usePage();
 
 const props = defineProps<Props>();
 const emit = defineEmits<EmitEvents>();
