@@ -31,6 +31,16 @@ Route::middleware(['auth', 'web'])->group(function () {
 
     Route::post('/movies/toggle-like', [MovieListController::class, 'toggleLike'])
         ->name('movies.toggle-like');
+
+    // Operações em lote
+    Route::delete('/movie-lists/{movieList}/bulk-remove', [MovieListController::class, 'bulkRemoveMovies'])
+        ->name('movie-lists.bulk-remove');
+
+    Route::post('/movie-lists/bulk-move', [MovieListController::class, 'bulkMoveMovies'])
+        ->name('movie-lists.bulk-move');
+
+    Route::post('/movies/bulk-mark-watched', [MovieListController::class, 'bulkMarkWatched'])
+        ->name('movies.bulk-mark-watched');
 });
 
 // Rotas públicas (listas públicas)

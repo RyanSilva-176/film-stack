@@ -60,9 +60,10 @@ interface MovieListServiceInterface
      ** Busca filmes de uma lista com dados do TMDB
      * @param MovieList $list
      * @param int $page
+     * @param array|null $filters
      * @return array<MovieListItem>
      */
-    public function getListMoviesWithDetails(MovieList $list, int $page = 1): array;
+    public function getListMoviesWithDetails(MovieList $list, int $page = 1, ?array $filters = null): array;
 
     /**
      ** Move filme assistido da watchlist para watched
@@ -80,4 +81,29 @@ interface MovieListServiceInterface
      * @return bool
      */
     public function toggleMovieLike(User $user, int $tmdbMovieId): bool;
+
+    /**
+     ** Remove múltiplos filmes de uma lista
+     * @param MovieList $list
+     * @param array $tmdbMovieIds
+     * @return int
+     */
+    public function bulkRemoveMoviesFromList(MovieList $list, array $tmdbMovieIds): int;
+
+    /**
+     ** Move múltiplos filmes entre listas
+     * @param MovieList $fromList
+     * @param MovieList $toList
+     * @param array $tmdbMovieIds
+     * @return int
+     */
+    public function bulkMoveMoviesBetweenLists(MovieList $fromList, MovieList $toList, array $tmdbMovieIds): int;
+
+    /**
+     ** Marca múltiplos filmes como assistidos
+     * @param User $user
+     * @param array $tmdbMovieIds
+     * @return int
+     */
+    public function bulkMarkMoviesAsWatched(User $user, array $tmdbMovieIds): int;
 }

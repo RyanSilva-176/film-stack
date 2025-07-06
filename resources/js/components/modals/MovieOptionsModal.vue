@@ -151,9 +151,33 @@ watch(
     () => props.movie,
     (newMovie) => {
         if (newMovie) {
-            localIsLiked.value = userListsStore.isMovieInList(newMovie.id, 'liked');
-            localIsInWatchlist.value = userListsStore.isMovieInList(newMovie.id, 'watchlist');
-            localIsWatched.value = userListsStore.isMovieInList(newMovie.id, 'watched');
+            // Reset local states when movie changes
+            localIsLiked.value = false;
+            localIsInWatchlist.value = false;
+            localIsWatched.value = false;
+
+            // Check actual states from store
+            const likedList = userListsStore.getLikedList;
+            const watchlist = userListsStore.getWatchlist;
+            const watchedList = userListsStore.getWatchedList;
+
+            if (likedList) {
+                localIsLiked.value = userListsStore.currentListMovies.some(
+                    item => item.tmdb_movie_id === newMovie.id && item.movie_list_id === likedList.id
+                );
+            }
+
+            if (watchlist) {
+                localIsInWatchlist.value = userListsStore.currentListMovies.some(
+                    item => item.tmdb_movie_id === newMovie.id && item.movie_list_id === watchlist.id
+                );
+            }
+
+            if (watchedList) {
+                localIsWatched.value = userListsStore.currentListMovies.some(
+                    item => item.tmdb_movie_id === newMovie.id && item.movie_list_id === watchedList.id
+                );
+            }
         }
     },
     { immediate: true },
@@ -210,10 +234,15 @@ const handleToggleWatchlist = async () => {
 
     loading.value.watchlist = true;
     try {
-        await userListsStore.toggleMovieInList(props.movie.id, 'watchlist');
+        const result = await userListsStore.toggleMovieInList(props.movie.id, 'watchlist');
 
-        const action = currentWatchlistState ? 'removido da' : 'adicionado à';
-        success('Sucesso!', `${props.movie.title} foi ${action} lista de desejos.`);
+        if (result.success) {
+            const action = currentWatchlistState ? 'removido da' : 'adicionado à';
+            success('Sucesso!', `${props.movie.title} foi ${action} lista de desejos.`);
+        } else {
+            localIsInWatchlist.value = currentWatchlistState;
+            showError('Erro!', 'Não foi possível atualizar a lista de desejos.');
+        }
     } catch (err) {
         localIsInWatchlist.value = currentWatchlistState;
 
@@ -253,25 +282,32 @@ const handleMarkWatched = async () => {
 const handleToggleCustomList = async (list: MovieList) => {
     if (!props.movie) return;
 
-    const isInList = userListsStore.isMovieInList(props.movie.id, list.type);
+    // Check if movie is in this specific custom list
+    const isInList = userListsStore.currentListMovies.some(
+        item => item.tmdb_movie_id === props.movie!.id && item.movie_list_id === list.id
+    );
 
     loading.value.custom = true;
     try {
         if (isInList) {
-            await userListsStore.removeMovieFromList(props.movie.id, list.id);
-            success('Sucesso!', `${props.movie.title} foi removido de "${list.name}".`);
-
-            list.movies_count--;
+            const result = await userListsStore.removeMovieFromList(props.movie.id, list.id);
+            if (result.success) {
+                success('Sucesso!', `${props.movie.title} foi removido de "${list.name}".`);
+                list.movies_count = Math.max(0, list.movies_count - 1);
+            }
         } else {
-            await userListsStore.addMovieToList(props.movie.id, list.id);
-            success('Sucesso!', `${props.movie.title} foi adicionado à "${list.name}".`);
-            list.movies_count++;
+            const result = await userListsStore.addMovieToList(props.movie.id, list.id);
+            if (result.success) {
+                success('Sucesso!', `${props.movie.title} foi adicionado à "${list.name}".`);
+                list.movies_count++;
+            }
         }
     } catch (err) {
+        // Revert optimistic update
         if (isInList) {
             list.movies_count++;
         } else {
-            list.movies_count--;
+            list.movies_count = Math.max(0, list.movies_count - 1);
         }
 
         console.error('Error toggling custom list:', err);

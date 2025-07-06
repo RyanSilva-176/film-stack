@@ -26,7 +26,7 @@
             </div>
 
             <!-- Loading state -->
-            <div v-if="loading || !imageLoaded" class="absolute inset-0 flex items-center justify-center bg-gray-800">
+            <div v-if="loading || (!imageLoaded && !imageError && movie.poster_url)" class="absolute inset-0 flex items-center justify-center bg-gray-800">
                 <div class="h-8 w-8 animate-spin rounded-full border-4 border-gray-600 border-t-white"></div>
             </div>
 

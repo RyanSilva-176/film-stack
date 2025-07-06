@@ -18,6 +18,7 @@ Route::middleware(['auth', 'verified', 'web'])->group(function () {
     Route::get('lists/watchlist', [MovieListController::class, 'watchlistPage'])->name('lists.watchlist');
     Route::get('lists/watched', [MovieListController::class, 'watchedPage'])->name('lists.watched');
     Route::get('lists/custom', [MovieListController::class, 'customPage'])->name('lists.custom');
+    Route::get('lists/{movieList}', [MovieListController::class, 'customListDetail'])->name('lists.detail');
 });
 
 Route::get('ui', function () {

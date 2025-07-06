@@ -50,7 +50,14 @@ class MovieListController extends Controller
         }
 
         $page = $request->get('page', 1);
-        $moviesData = $this->movieListService->getListMoviesWithDetails($movieList, $page);
+        $filters = [
+            'search' => $request->get('search'),
+            'genre' => $request->get('genre'),
+            'sort' => $request->get('sort', 'added_date_desc'),
+            'per_page' => $request->get('per_page', 20),
+        ];
+
+        $moviesData = $this->movieListService->getListMoviesWithDetails($movieList, $page, $filters);
 
         return response()->json([
             'success' => true,
@@ -269,5 +276,134 @@ class MovieListController extends Controller
     public function customPage(): Response
     {
         return Inertia::render('MovieLists/Custom');
+    }
+
+    /**
+     * Página de detalhes de uma lista personalizada
+     */
+    public function customListDetail(MovieList $movieList): Response
+    {
+        // Verify if the list belongs to the authenticated user
+        if ($movieList->user_id !== Auth::id()) {
+            abort(404);
+        }
+
+        return Inertia::render('MovieLists/CustomListDetail', [
+            'list' => $movieList
+        ]);
+    }
+
+    /**
+     ** Remove múltiplos filmes de uma lista
+     */
+    public function bulkRemoveMovies(MovieList $movieList, Request $request): JsonResponse
+    {
+        if ($movieList->user_id !== Auth::id()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Lista não encontrada',
+            ], 404);
+        }
+
+        $request->validate([
+            'movie_ids' => 'required|array',
+            'movie_ids.*' => 'required|integer',
+        ]);
+
+        $movieIds = $request->input('movie_ids');
+
+        try {
+            $removedCount = $this->movieListService->bulkRemoveMoviesFromList($movieList, $movieIds);
+
+            return response()->json([
+                'success' => true,
+                'message' => "Filmes removidos com sucesso",
+                'data' => ['removed_count' => $removedCount],
+            ]);
+        } catch (Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Erro ao remover filmes',
+                'error' => $e->getMessage(),
+            ], 400);
+        }
+    }
+
+    /**
+     ** Move múltiplos filmes entre listas
+     */
+    public function bulkMoveMovies(Request $request): JsonResponse
+    {
+        $request->validate([
+            'movie_ids' => 'required|array',
+            'movie_ids.*' => 'required|integer',
+            'from_list_id' => 'required|integer',
+            'to_list_id' => 'required|integer',
+        ]);
+
+        $movieIds = $request->input('movie_ids');
+        $fromListId = $request->input('from_list_id');
+        $toListId = $request->input('to_list_id');
+
+        $fromList = MovieList::where('id', $fromListId)
+            ->where('user_id', Auth::id())
+            ->first();
+
+        $toList = MovieList::where('id', $toListId)
+            ->where('user_id', Auth::id())
+            ->first();
+
+        if (!$fromList || !$toList) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Lista não encontrada',
+            ], 404);
+        }
+
+        try {
+            $movedCount = $this->movieListService->bulkMoveMoviesBetweenLists($fromList, $toList, $movieIds);
+
+            return response()->json([
+                'success' => true,
+                'message' => "Filmes movidos com sucesso",
+                'data' => ['moved_count' => $movedCount],
+            ]);
+        } catch (Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Erro ao mover filmes',
+                'error' => $e->getMessage(),
+            ], 400);
+        }
+    }
+
+    /**
+     ** Marca múltiplos filmes como assistidos
+     */
+    public function bulkMarkWatched(Request $request): JsonResponse
+    {
+        $request->validate([
+            'movie_ids' => 'required|array',
+            'movie_ids.*' => 'required|integer',
+        ]);
+
+        $movieIds = $request->input('movie_ids');
+        $user = Auth::user();
+
+        try {
+            $addedCount = $this->movieListService->bulkMarkMoviesAsWatched($user, $movieIds);
+
+            return response()->json([
+                'success' => true,
+                'message' => "Filmes marcados como assistidos",
+                'data' => ['added_count' => $addedCount],
+            ]);
+        } catch (Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Erro ao marcar filmes como assistidos',
+                'error' => $e->getMessage(),
+            ], 400);
+        }
     }
 }

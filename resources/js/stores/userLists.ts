@@ -39,6 +39,14 @@ export interface MovieListItem {
     movie?: Movie;
 }
 
+export interface ListFilters {
+    search?: string;
+    genre?: string;
+    sortBy?: string;
+    page?: number;
+    perPage?: number;
+}
+
 export interface UserListsResponse {
     success: boolean;
     data: MovieList[];
@@ -110,13 +118,21 @@ export const useUserListsStore = defineStore('userLists', {
             }
         },
 
-        async fetchListMovies(listId: number, page: number = 1) {
+        async fetchListMovies(listId: number, page: number = 1, filters?: ListFilters) {
             this.loading = true;
             this.error = null;
 
             try {
+                const params: any = { page };
+                if (filters) {
+                    if (filters.search) params.search = filters.search;
+                    if (filters.genre) params.genre = filters.genre;
+                    if (filters.sortBy) params.sort = filters.sortBy;
+                    if (filters.perPage) params.per_page = filters.perPage;
+                }
+
                 const response = await axios.get<ListMoviesResponse>(route('movie-lists.show', { movieList: listId }), {
-                    params: { page }
+                    params
                 });
 
                 if (response.data.success) {
@@ -321,6 +337,91 @@ export const useUserListsStore = defineStore('userLists', {
 
         clearError() {
             this.error = null;
+        },
+
+        // Bulk operations
+        async bulkRemoveMovies(movieIds: number[], listId: number) {
+            try {
+                const response = await axios.delete(route('movie-lists.bulk-remove', { movieList: listId }), {
+                    data: { movie_ids: movieIds }
+                });
+
+                if (response.data.success) {
+                    // Remove movies from current list
+                    this.currentListMovies = this.currentListMovies.filter(
+                        item => !movieIds.includes(item.tmdb_movie_id)
+                    );
+
+                    // Update movie count
+                    const list = this.lists.find(l => l.id === listId);
+                    if (list && typeof list.movies_count === 'number') {
+                        list.movies_count = Math.max(0, list.movies_count - movieIds.length);
+                    }
+                }
+
+                return response.data;
+            } catch (error) {
+                console.error('Error bulk removing movies:', error);
+                throw error;
+            }
+        },
+
+        async bulkMoveMovies(movieIds: number[], fromListId: number, toListId: number) {
+            try {
+                const response = await axios.post(route('movie-lists.bulk-move'), {
+                    movie_ids: movieIds,
+                    from_list_id: fromListId,
+                    to_list_id: toListId
+                });
+
+                if (response.data.success) {
+                    // Remove movies from current list
+                    this.currentListMovies = this.currentListMovies.filter(
+                        item => !movieIds.includes(item.tmdb_movie_id)
+                    );
+
+                    // Update movie counts
+                    const fromList = this.lists.find(l => l.id === fromListId);
+                    const toList = this.lists.find(l => l.id === toListId);
+
+                    if (fromList && typeof fromList.movies_count === 'number') {
+                        fromList.movies_count = Math.max(0, fromList.movies_count - movieIds.length);
+                    }
+                    if (toList && typeof toList.movies_count === 'number') {
+                        toList.movies_count += movieIds.length;
+                    }
+                }
+
+                return response.data;
+            } catch (error) {
+                console.error('Error bulk moving movies:', error);
+                throw error;
+            }
+        },
+
+        async bulkMarkWatched(movieIds: number[]) {
+            try {
+                const response = await axios.post(route('movies.bulk-mark-watched'), {
+                    movie_ids: movieIds
+                });
+
+                if (response.data.success) {
+                    const watchedList = this.getWatchedList;
+                    if (watchedList && typeof watchedList.movies_count === 'number') {
+                        watchedList.movies_count += response.data.added_count || 0;
+                    }
+
+                    // Refresh current list if needed
+                    if (this.currentList) {
+                        await this.fetchListMovies(this.currentList.id, this.pagination.current_page);
+                    }
+                }
+
+                return response.data;
+            } catch (error) {
+                console.error('Error bulk marking watched:', error);
+                throw error;
+            }
         },
     },
 });
