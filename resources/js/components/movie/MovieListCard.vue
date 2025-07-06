@@ -1,10 +1,10 @@
 <template>
     <div
-        class="movie-list-card group relative cursor-pointer overflow-hidden rounded-lg bg-gray-900 transition-all duration-300 w-full"
+        class="movie-list-card group relative w-full cursor-pointer overflow-hidden rounded-lg bg-gray-900 transition-all duration-300"
         :class="[
-            loading ? 'animate-pulse' : '', 
-            selected ? 'ring-2 ring-red-500 ring-offset-2 ring-offset-gray-900 bg-red-900/30' : '',
-            viewMode === 'list' ? 'flex hover:bg-gray-800/80' : 'flex flex-col hover:scale-105 hover:shadow-xl'
+            loading ? 'animate-pulse' : '',
+            selected ? 'bg-red-900/30 ring-2 ring-red-500 ring-offset-2 ring-offset-gray-900' : '',
+            viewMode === 'list' ? 'flex hover:bg-gray-800/80' : 'flex flex-col hover:scale-105 hover:shadow-xl',
         ]"
         @click="handleClick"
         ref="cardRef"
@@ -15,40 +15,47 @@
                 type="checkbox"
                 :checked="selected"
                 @click.stop="handleSelectionChange"
-                class="w-5 h-5 text-red-600 bg-gray-800 border-gray-600 rounded focus:ring-red-500 focus:ring-2"
+                class="h-5 w-5 rounded border-gray-600 bg-gray-800 text-red-600 focus:ring-2 focus:ring-red-500"
             />
         </div>
 
         <!-- Poster Image -->
-        <div 
-            class="relative overflow-hidden flex-shrink-0"
-            :class="viewMode === 'list' ? 'w-32 h-50' : 'aspect-[2/3] w-full'"
-        >
+        <div class="relative flex-shrink-0 overflow-hidden" :class="viewMode === 'list' ? 'h-50 w-32' : 'aspect-[2/3] w-full'">
             <img
-                v-if="movie.poster_url && !imageError"
-                :src="movie.poster_url"
+                v-if="posterImageUrl && !imageError"
+                :src="posterImageUrl"
                 :alt="movie.title"
                 class="h-full w-full object-cover transition-transform duration-300 group-hover:scale-110"
                 loading="lazy"
-                @error="imageError = true"
-                @load="imageLoaded = true"
+                @error="handleImageError"
+                @load="handleImageLoad"
                 ref="imageRef"
             />
 
             <!-- Placeholder for missing poster -->
             <div v-else class="flex h-full w-full items-center justify-center bg-gray-800 text-gray-400">
-                <FontAwesomeIcon icon="film" :class="viewMode === 'list' ? 'h-6 w-6' : 'h-12 w-12'" />
+                <div class="text-center">
+                    <FontAwesomeIcon icon="film" :class="viewMode === 'list' ? 'h-6 w-6' : 'h-12 w-12'" />
+                    <p v-if="viewMode !== 'list'" class="mt-2 text-xs text-gray-500">Sem imagem</p>
+                </div>
             </div>
 
-            <!-- Loading state -->
-            <div v-if="loading || (!imageLoaded && !imageError)" class="absolute inset-0 flex items-center justify-center bg-gray-800">
-                <div :class="viewMode === 'list' ? 'h-4 w-4 border-2' : 'h-8 w-8 border-4'" class="animate-spin rounded-full border-gray-600 border-t-white"></div>
+            <!-- Loading state - só mostra se há URL para carregar e ainda não terminou -->
+            <div v-if="posterImageUrl && !imageLoaded && !imageError && imageInitialized" class="absolute inset-0 flex items-center justify-center bg-gray-800">
+                <div
+                    :class="viewMode === 'list' ? 'h-4 w-4 border-2' : 'h-8 w-8 border-4'"
+                    class="animate-spin rounded-full border-gray-600 border-t-white"
+                ></div>
             </div>
 
             <!-- Rating Badge -->
             <div
                 v-if="showRating && movie.vote_average > 0"
-                :class="viewMode === 'list' ? 'absolute top-1 right-1 rounded px-1 py-0.5 text-xs' : 'absolute top-2 right-2 rounded-full px-2 py-1 text-xs'"
+                :class="
+                    viewMode === 'list'
+                        ? 'absolute top-1 right-1 rounded px-1 py-0.5 text-xs'
+                        : 'absolute top-2 right-2 rounded-full px-2 py-1 text-xs'
+                "
                 class="bg-black/80 font-bold text-white backdrop-blur-sm"
             >
                 <FontAwesomeIcon icon="star" :class="viewMode === 'list' ? 'mr-0.5 text-yellow-400' : 'mr-1 text-yellow-400'" />
@@ -56,15 +63,20 @@
             </div>
 
             <!-- List Type Badge -->
-            <div v-if="listType && listType !== 'custom'" :class="[
-                viewMode === 'list' ? 'absolute bottom-2 left-2' : 'absolute top-2 left-2',
-                { 'left-8': selectionMode && viewMode !== 'list' }
-            ]">
-                <div :class="[
-                    viewMode === 'list' ? 'rounded px-1 py-0.5 text-xs' : 'rounded-full px-2 py-1 text-xs',
-                    'font-medium backdrop-blur-sm',
-                    listTypeBadgeClass
-                ]">
+            <div
+                v-if="listType && listType !== 'custom'"
+                :class="[
+                    viewMode === 'list' ? 'absolute bottom-2 left-2' : 'absolute top-2 left-2',
+                    { 'left-8': selectionMode && viewMode !== 'list' },
+                ]"
+            >
+                <div
+                    :class="[
+                        viewMode === 'list' ? 'rounded px-1 py-0.5 text-xs' : 'rounded-full px-2 py-1 text-xs',
+                        'font-medium backdrop-blur-sm',
+                        listTypeBadgeClass,
+                    ]"
+                >
                     <FontAwesomeIcon :icon="listTypeIcon" :class="viewMode === 'list' ? 'mr-0.5' : 'mr-1'" />
                     {{ listTypeLabel }}
                 </div>
@@ -72,15 +84,15 @@
         </div>
 
         <!-- Movie Info -->
-        <div class="flex-1 p-3 flex flex-col justify-between min-w-0">
+        <div class="flex min-w-0 flex-1 flex-col justify-between p-3">
             <div class="space-y-2">
                 <div class="flex items-start justify-between gap-2">
-                    <h3 class="font-semibold text-white text-base line-clamp-2 flex-1" :title="movie.title">
+                    <h3 class="line-clamp-2 flex-1 text-base font-semibold text-white" :title="movie.title">
                         {{ movie.title }}
                     </h3>
-                    
+
                     <!-- Action Buttons -->
-                    <div class="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity duration-200 flex-shrink-0">
+                    <div class="flex flex-shrink-0 gap-1 opacity-0 transition-opacity duration-200 group-hover:opacity-100">
                         <Button
                             variant="ghost"
                             size="sm"
@@ -89,7 +101,7 @@
                             aria-label="Ver detalhes"
                             class="h-8 w-8 text-blue-400 hover:bg-blue-400/20"
                         />
-                        
+
                         <!-- <Button
                             v-if="!isWatchedList"
                             variant="ghost"
@@ -111,38 +123,31 @@
                         />
                     </div>
                 </div>
-                
+
                 <div class="flex items-center gap-4 text-sm text-gray-400">
                     <span v-if="movie.release_date">
                         {{ new Date(movie.release_date).getFullYear() }}
                     </span>
-                    
+
                     <span v-if="movie.runtime" class="flex items-center gap-1">
                         <FontAwesomeIcon icon="clock" class="h-3 w-3" />
                         {{ movie.runtime }} min
                     </span>
-                    
-                    <span v-if="listItem?.watched_at" class="text-green-400 flex items-center gap-1">
+
+                    <span v-if="listItem?.watched_at" class="flex items-center gap-1 text-green-400">
                         <FontAwesomeIcon icon="check-circle" class="h-3 w-3" />
                         Assistido
                     </span>
-                    
-                    <span v-if="listItem?.rating" class="text-yellow-400 flex items-center gap-1">
+
+                    <span v-if="listItem?.rating" class="flex items-center gap-1 text-yellow-400">
                         <FontAwesomeIcon icon="star" class="h-3 w-3" />
                         {{ listItem.rating }}/10
                     </span>
                 </div>
 
                 <!-- Genres -->
-                <div
-                    v-if="movieGenres.length > 0"
-                    class="flex gap-1 flex-wrap"
-                >
-                    <span
-                        v-for="genre in movieGenres.slice(0, 3)"
-                        :key="genre"
-                        class="rounded-full bg-gray-700 px-2 py-0.5 text-xs text-gray-300"
-                    >
+                <div v-if="movieGenres.length > 0" class="flex flex-wrap gap-1">
+                    <span v-for="genre in movieGenres.slice(0, 3)" :key="genre" class="rounded-full bg-gray-700 px-2 py-0.5 text-xs text-gray-300">
                         {{ genre }}
                     </span>
                 </div>
@@ -154,42 +159,27 @@
             </div>
 
             <!-- Mobile Action Buttons -->
-            <div class="flex justify-center gap-1 mt-2 md:hidden">
-                <Button
-                    variant="primary"
-                    size="xs"
-                    icon="info-circle"
-                    @click.stop="handleDetailsClick"
-                    class="flex-1"
-                >
-                    Detalhes
-                </Button>
-                
-                <Button
-                    variant="ghost"
-                    size="xs"
-                    icon="ellipsis-h"
-                    @click.stop="handleShowOptions"
-                    class="px-2"
-                />
+            <div class="mt-2 flex justify-center gap-1 md:hidden">
+                <Button variant="primary" size="xs" icon="info-circle" @click.stop="handleDetailsClick" class="flex-1"> Detalhes </Button>
+
+                <Button variant="ghost" size="xs" icon="ellipsis-h" @click.stop="handleShowOptions" class="px-2" />
             </div>
         </div>
 
         <!-- Loading Overlay -->
-        <div v-if="actionLoading.remove || actionLoading.watched" 
-             class="absolute inset-0 bg-black/50 flex items-center justify-center">
-            <div class="w-8 h-8 border-4 border-white border-t-transparent rounded-full animate-spin"></div>
+        <div v-if="actionLoading.remove || actionLoading.watched" class="absolute inset-0 flex items-center justify-center bg-black/50">
+            <div class="h-8 w-8 animate-spin rounded-full border-4 border-white border-t-transparent"></div>
         </div>
     </div>
 </template>
 
 <script setup lang="ts">
 import Button from '@/components/ui/Button.vue';
-import type { Movie } from '@/types/movies';
-import type { MovieListItem } from '@/stores/userLists';
 import { useMoviesStore } from '@/stores/movies';
+import type { MovieListItem } from '@/stores/userLists';
+import type { Movie } from '@/types/movies';
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome';
-import { computed, ref } from 'vue';
+import { computed, ref, watch } from 'vue';
 
 interface Props {
     movie: Movie;
@@ -229,10 +219,23 @@ const cardRef = ref<HTMLElement>();
 const imageRef = ref<HTMLImageElement>();
 const imageError = ref(false);
 const imageLoaded = ref(false);
+const imageInitialized = ref(false);
 
 const actionLoading = ref({
     remove: false,
     watched: false,
+});
+
+const posterImageUrl = computed(() => {
+    if (!props.movie || imageError.value) return null;
+    
+    // Prioridade: poster_url > poster_path > backdrop_url > backdrop_path
+    if (props.movie.poster_url) return props.movie.poster_url;
+    if (props.movie.poster_path) return `https://image.tmdb.org/t/p/w342${props.movie.poster_path}`;
+    if (props.movie.backdrop_url) return props.movie.backdrop_url;
+    if (props.movie.backdrop_path) return `https://image.tmdb.org/t/p/w342${props.movie.backdrop_path}`;
+    
+    return null;
 });
 
 const movieGenres = computed(() => {
@@ -320,6 +323,45 @@ const handleShowOptions = () => {
 const handleSelectionChange = () => {
     emit('selection-change', props.movie, !props.selected);
 };
+
+// Image error handlers
+const handleImageError = () => {
+    imageError.value = true;
+    imageLoaded.value = false;
+    imageInitialized.value = true;
+};
+
+const handleImageLoad = () => {
+    imageLoaded.value = true;
+    imageError.value = false;
+    imageInitialized.value = true;
+};
+
+// Reset image states when movie changes
+watch(
+    () => props.movie,
+    () => {
+        imageError.value = false;
+        imageLoaded.value = false;
+        imageInitialized.value = false;
+    },
+);
+
+// Watch para inicializar o estado da imagem
+watch(
+    posterImageUrl,
+    (newUrl) => {
+        if (newUrl) {
+            imageInitialized.value = true;
+        } else {
+            // Se não há URL, marca como "carregado" para evitar loading infinito
+            imageLoaded.value = true;
+            imageError.value = false;
+            imageInitialized.value = true;
+        }
+    },
+    { immediate: true }
+);
 </script>
 
 <style scoped>

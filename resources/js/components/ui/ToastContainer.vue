@@ -1,10 +1,10 @@
 <template>
   <Teleport to="body">
-    <div class="fixed top-4 right-4 z-50 space-y-2">
+    <div class="fixed top-4 right-4 left-4 sm:left-auto z-[9999] space-y-2 max-w-sm w-full sm:w-auto sm:max-w-sm pointer-events-none">
       <TransitionGroup
         name="toast"
         tag="div"
-        class="space-y-2"
+        class="space-y-2 pointer-events-auto"
       >
         <Toast
           v-for="toast in toasts"

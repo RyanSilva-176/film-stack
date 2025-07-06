@@ -49,7 +49,7 @@ const footerNavItems: NavItem[] = [
     },
     {
         title: 'Documentation',
-        href: 'https://laravel.com/docs/starter-kits#vue',
+        href: 'https://github.com/RyanSilva-176/film-stack/blob/main/README.md',
         icon: BookOpen,
     },
 ];

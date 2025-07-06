@@ -1,7 +1,7 @@
 <template>
     <div
         v-if="visible"
-        class="relative max-w-sm rounded-lg bg-gray-900 p-4 text-white shadow-2xl border border-gray-700 cursor-pointer"
+        class="relative w-full max-w-sm rounded-lg bg-gray-900 p-4 text-white shadow-2xl border border-gray-700 cursor-pointer"
         :class="toastClasses"
         @click="close"
         @mouseenter="pauseTimer"
