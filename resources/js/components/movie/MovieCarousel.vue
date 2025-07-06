@@ -1,14 +1,14 @@
 <template>
     <section class="movie-carousel">
         <!-- Section Header -->
-        <div class="mb-6 flex items-center justify-between px-4 sm:px-6 lg:px-8">
-            <h2 class="flex items-center gap-3 text-xl font-bold text-white sm:text-2xl" ref="titleRef">
-                <FontAwesomeIcon v-if="icon" :icon="icon" class="text-lg text-red-500" />
-                {{ title }}
+        <div class="mb-6 flex items-center justify-between px-4 sm:px-6 lg:px-8 max-w-full">
+            <h2 class="flex items-center gap-3 text-xl font-bold text-white sm:text-2xl flex-1 min-w-0" ref="titleRef">
+                <FontAwesomeIcon v-if="icon" :icon="icon" class="text-lg text-red-500 flex-shrink-0" />
+                <span class="truncate">{{ title }}</span>
             </h2>
 
             <!-- Navigation Arrows -->
-            <div class="flex items-center gap-2">
+            <div class="flex items-center gap-2 flex-shrink-0 ml-4">
                 <button
                     :disabled="!canScrollLeft"
                     :class="[
@@ -40,7 +40,7 @@
         </div>
 
         <!-- Carousel Container -->
-        <div class="relative" ref="carouselRef">
+        <div class="relative overflow-hidden" ref="carouselRef">
             <!-- Loading Skeletons -->
             <div v-if="loading" class="scrollbar-hide flex gap-6 overflow-x-auto px-4 sm:px-6 lg:px-8">
                 <MovieCardSkeleton v-for="i in skeletonCount" :key="`skeleton-${i}`" class="flex-shrink-0" />
@@ -270,11 +270,15 @@ onMounted(() => {
 .movie-carousel {
     user-select: none;
     overflow: hidden;
+    width: 100%;
+    max-width: 100vw;
 }
 
 .carousel-container {
     padding-left: 1rem;
     padding-right: 1rem;
+    overflow: hidden;
+    max-width: 100%;
 }
 
 @media (min-width: 640px) {
@@ -292,13 +296,15 @@ onMounted(() => {
 }
 
 :deep(.carousel__viewport) {
-    overflow: visible;
+    overflow: hidden;
     perspective: 1000px;
+    max-width: 100%;
 }
 
 :deep(.carousel__track) {
     align-items: stretch; /* Garante que todos os slides tenham a mesma altura */
     gap: 1.5rem;
+    max-width: 100%;
 }
 
 :deep(.carousel__slide) {
@@ -306,6 +312,7 @@ onMounted(() => {
     min-height: 0;
     flex: 0 0 auto;
     display: flex; /* Torna o slide um flex container */
+    max-width: calc((100vw - 8rem) / 1.5); /* Previne overflow em mobile */
 }
 
 :deep(.carousel__pagination) {
@@ -359,10 +366,15 @@ onMounted(() => {
     :deep(.carousel__viewport) {
         -webkit-overflow-scrolling: touch;
         scroll-behavior: smooth;
+        overflow: hidden;
     }
     
     :deep(.carousel__track) {
         gap: 1rem; 
+    }
+
+    :deep(.carousel__slide) {
+        max-width: calc((100vw - 4rem) / 1.5); /* Ajuste para mobile */
     }
 }
 
@@ -370,11 +382,19 @@ onMounted(() => {
     :deep(.carousel__track) {
         gap: 1.5rem;
     }
+
+    :deep(.carousel__slide) {
+        max-width: calc((100vw - 6rem) / 2.5); /* Ajuste para tablet */
+    }
 }
 
 @media (min-width: 1024px) {
     :deep(.carousel__track) {
         gap: 2rem;
+    }
+
+    :deep(.carousel__slide) {
+        max-width: calc((100vw - 8rem) / 4.5); /* Ajuste para desktop */
     }
 }
 

@@ -139,14 +139,14 @@ onMounted(async () => {
     <Head title="Dashboard" />
 
     <AppLayout>
-        <div class="min-h-screen bg-gray-950">
+        <div class="min-h-screen bg-gray-950 overflow-x-hidden">
             <!-- Hero Section Slideshow -->
             <HeroSectionSlideshow :movies="trendingMovies.slice(0, 5)" @movie-details="handleMovieDetails" @add-to-list="handleAddToList" />
 
             <!-- Main Content -->
-            <main class="container mx-auto space-y-12 px-4 py-8 md:py-12">
+            <main class="container mx-auto space-y-12 px-4 py-8 md:py-12 max-w-full overflow-x-hidden">
                 <!-- Trending Movies -->
-                <section>
+                <section class="overflow-hidden">
                     <MovieCarousel
                         title="Filmes em Alta"
                         subtitle="Os filmes mais populares do momento"
@@ -158,7 +158,7 @@ onMounted(async () => {
                 </section>
 
                 <!-- Popular Movies -->
-                <section>
+                <section class="overflow-hidden">
                     <MovieCarousel
                         title="Populares"
                         subtitle="Filmes mais bem avaliados"
@@ -170,7 +170,7 @@ onMounted(async () => {
                 </section>
 
                 <!-- Upcoming Movies -->
-                <section>
+                <section class="overflow-hidden">
                     <MovieCarousel
                         title="Em Breve"
                         subtitle="Próximos lançamentos"
@@ -182,7 +182,7 @@ onMounted(async () => {
                 </section>
 
                 <!-- Action Movies -->
-                <section>
+                <section class="overflow-hidden">
                     <MovieCarousel
                         title="Ação & Aventura"
                         subtitle="Filmes cheios de adrenalina"
@@ -194,7 +194,7 @@ onMounted(async () => {
                 </section>
 
                 <!-- Comedy Movies -->
-                <section>
+                <section class="overflow-hidden">
                     <MovieCarousel
                         title="Comédia"
                         subtitle="Para dar boas risadas"
@@ -206,7 +206,7 @@ onMounted(async () => {
                 </section>
 
                 <!-- Horror Movies -->
-                <section>
+                <section class="overflow-hidden">
                     <MovieCarousel
                         title="Terror"
                         subtitle="Para quem gosta de emoção forte"
@@ -218,7 +218,7 @@ onMounted(async () => {
                 </section>
 
                 <!-- Animation Movies -->
-                <section>
+                <section class="overflow-hidden">
                     <MovieCarousel
                         title="Animação"
                         subtitle="Diversão para toda a família"
@@ -230,7 +230,7 @@ onMounted(async () => {
                 </section>
 
                 <!-- Fantasy Movies -->
-                <section>
+                <section class="overflow-hidden">
                     <MovieCarousel
                         title="Fantasia"
                         subtitle="Mundos mágicos e aventuras épicas"
@@ -242,7 +242,7 @@ onMounted(async () => {
                 </section>
 
                 <!-- Discover Movies -->
-                <section>
+                <section class="overflow-hidden">
                     <MovieCarousel
                         title="Descobrir"
                         subtitle="Filmes recomendados para você"

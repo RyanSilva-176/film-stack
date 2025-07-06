@@ -1,6 +1,6 @@
 <template>
     <div
-        class="movie-card group relative cursor-pointer overflow-hidden rounded-lg bg-gray-900 transition-shadow duration-300 w-full h-full flex flex-col"
+        class="movie-card group relative cursor-pointer overflow-hidden rounded-lg bg-gray-900 transition-shadow duration-300 w-full h-full flex flex-col max-w-full"
         :class="[loading ? 'animate-pulse' : '']"
         @click="handleClick"
         ref="cardRef"
