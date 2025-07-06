@@ -25,4 +25,9 @@ interface TmdbSearchServiceInterface
      * Busca com sugestões inteligentes
      */
     public function searchWithSuggestions(string $query, int $page = 1): array;
+
+    /**
+     * Busca avançada com múltiplos filtros
+     */
+    public function advancedSearch(array $criteria): ?SearchResultDTO;
 }

@@ -4,30 +4,69 @@ namespace App\Services\Tmdb\Services;
 
 use App\Services\Tmdb\Contracts\TmdbSearchServiceInterface;
 use App\Services\Tmdb\Contracts\TmdbGenreServiceInterface;
+use App\Services\Tmdb\Contracts\TmdbImageServiceInterface;
 use App\Services\Tmdb\DTOs\SearchResultDTO;
 
 class TmdbSearchService extends TmdbBaseService implements TmdbSearchServiceInterface
 {
     protected TmdbGenreServiceInterface $genreService;
+    protected TmdbImageServiceInterface $imageService;
 
-    public function __construct(TmdbGenreServiceInterface $genreService)
+    public function __construct(TmdbGenreServiceInterface $genreService, TmdbImageServiceInterface $imageService)
     {
         parent::__construct();
         $this->genreService = $genreService;
+        $this->imageService = $imageService;
     }
 
-    // TODO: Terminar de adicionar as tags de documentação
 
     /**
-     * Busca por filmes com paginação aprimorada e filtros
+     ** Gera URL do poster do filme
+     * @param string|null $posterPath
+     * @param string $size
+     * @return string|null
+     */
+    protected function getPosterUrl(?string $posterPath, string $size = 'w500'): ?string
+    {
+        return $this->imageService->getPosterUrl($posterPath, $size);
+    }
+
+    /**
+     ** Gera URL do backdrop do filme
+     * @param string|null $backdropPath
+     * @param string $size
+     * @return string|null
+     */
+    protected function getBackdropUrl(?string $backdropPath, string $size = 'w1280'): ?string
+    {
+        return $this->imageService->getBackdropUrl($backdropPath, $size);
+    }
+
+    /**
+     ** Busca por filmes com paginação aprimorada e filtros
+     * @param string $query
+     * @param int $page
+     * @param array $filters
+     * @return SearchResultDTO|null
      */
     public function searchMovies(string $query, int $page = 1, array $filters = []): ?SearchResultDTO
     {
+        $hasAdvancedFilters = isset($filters['year']);
+
+        if ($hasAdvancedFilters) {
+            $criteria = [
+                'page' => $page,
+                ...$filters
+            ];
+
+            return $this->advancedSearchWithQuery($query, $criteria);
+        }
+
         $params = array_merge([
             'query' => trim($query),
             'page' => $page,
             'include_adult' => false,
-        ], $filters);
+        ], array_diff_key($filters, ['sort_by' => '']));
 
         $params = $this->validatePaginationParams($params);
 
@@ -37,19 +76,97 @@ class TmdbSearchService extends TmdbBaseService implements TmdbSearchServiceInte
             return null;
         }
 
-        // Enriquecer resultados com informações de gêneros
         if (isset($results['results']) && is_array($results['results'])) {
-            $results['results'] = array_map(
-                [$this->genreService, 'enrichMovieWithGenres'],
-                $results['results']
-            );
+            $results['results'] = array_map(function ($movie) {
+                $movie = $this->genreService->enrichMovieWithGenres($movie);
+
+                $movie['poster_url'] = $this->getPosterUrl($movie['poster_path'] ?? null);
+                $movie['backdrop_url'] = $this->getBackdropUrl($movie['backdrop_path'] ?? null);
+
+                return $movie;
+            }, $results['results']);
+
+            if (isset($filters['sort_by'])) {
+                $results['results'] = $this->sortResults($results['results'], $filters['sort_by']);
+            }
         }
 
         return SearchResultDTO::fromArray($results, $query, $filters);
     }
 
     /**
-     * Busca multi-mídia (filmes, séries, pessoas)
+     ** Busca avançada com query de texto
+     * @param string $query
+     * @param array $criteria
+     * @return SearchResultDTO|null
+     */
+    protected function advancedSearchWithQuery(string $query, array $criteria): ?SearchResultDTO
+    {
+        $endpoint = '/discover/movie';
+        $params = $this->buildAdvancedSearchParams($criteria);
+
+        $results = $this->makeRequest($endpoint, $params);
+
+        if (!$results) {
+            return null;
+        }
+
+        if (isset($results['results']) && is_array($results['results'])) {
+            $results['results'] = array_map(function ($movie) {
+                $movie = $this->genreService->enrichMovieWithGenres($movie);
+
+                $movie['poster_url'] = $this->getPosterUrl($movie['poster_path'] ?? null);
+                $movie['backdrop_url'] = $this->getBackdropUrl($movie['backdrop_path'] ?? null);
+
+                return $movie;
+            }, $results['results']);
+
+            if (!empty(trim($query))) {
+                $queryLower = strtolower(trim($query));
+                $queryWords = explode(' ', $queryLower);
+
+                $results['results'] = array_filter($results['results'], function ($movie) use ($queryLower, $queryWords) {
+                    $title = strtolower($movie['title'] ?? '');
+                    $originalTitle = strtolower($movie['original_title'] ?? '');
+                    $overview = strtolower($movie['overview'] ?? '');
+
+                    if (
+                        strpos($title, $queryLower) !== false ||
+                        strpos($originalTitle, $queryLower) !== false ||
+                        strpos($overview, $queryLower) !== false
+                    ) {
+                        return true;
+                    }
+
+                    foreach ($queryWords as $word) {
+                        if (strlen($word) > 2 && (
+                            strpos($title, $word) !== false ||
+                            strpos($originalTitle, $word) !== false ||
+                            strpos($overview, $word) !== false
+                        )) {
+                            return true;
+                        }
+                    }
+
+                    return false;
+                });
+
+                $results['results'] = array_values($results['results']);
+
+                $results['total_results'] = count($results['results']);
+                $results['total_pages'] = max(1, ceil($results['total_results'] / 20));
+            }
+        }
+
+        return SearchResultDTO::fromArray($results, $query, $criteria);
+    }
+
+    /**
+     ** Busca multi-mídia
+     * @param string $query
+     * @param int $page
+     * @param array $filters
+     * @return SearchResultDTO|null
      */
     public function searchMulti(string $query, int $page = 1, array $filters = []): ?SearchResultDTO
     {
@@ -67,11 +184,26 @@ class TmdbSearchService extends TmdbBaseService implements TmdbSearchServiceInte
             return null;
         }
 
+        if (isset($results['results']) && is_array($results['results'])) {
+            $results['results'] = array_map(function ($item) {
+                if (isset($item['media_type']) && $item['media_type'] === 'movie') {
+                    $item = $this->genreService->enrichMovieWithGenres($item);
+                    $item['poster_url'] = $this->getPosterUrl($item['poster_path'] ?? null);
+                    $item['backdrop_url'] = $this->getBackdropUrl($item['backdrop_path'] ?? null);
+                }
+                return $item;
+            }, $results['results']);
+        }
+
         return SearchResultDTO::fromArray($results, $query, $filters);
     }
 
     /**
-     * Busca pessoas (atores, diretores)
+     ** Busca pessoas
+     * @param string $query
+     * @param int $page
+     * @param array $filters
+     * @return SearchResultDTO|null
      */
     public function searchPeople(string $query, int $page = 1, array $filters = []): ?SearchResultDTO
     {
@@ -93,16 +225,18 @@ class TmdbSearchService extends TmdbBaseService implements TmdbSearchServiceInte
     }
 
     /**
-     * Busca com sugestões inteligentes
+     ** Busca com sugestões inteligentes
+     * @param string $query
+     * @param int $page
+     * @return array
      */
     public function searchWithSuggestions(string $query, int $page = 1): array
     {
         $searchResults = $this->searchMovies($query, $page);
-        
+
         if (!$searchResults || !$searchResults->hasResults()) {
-            // Se não encontrou resultados, tenta busca mais flexível
             $suggestions = $this->generateSearchSuggestions($query);
-            
+
             return [
                 'results' => $searchResults,
                 'suggestions' => $suggestions,
@@ -118,31 +252,30 @@ class TmdbSearchService extends TmdbBaseService implements TmdbSearchServiceInte
     }
 
     /**
-     * Gera sugestões de busca baseadas no termo original
+     ** Gera sugestões de busca baseadas no termo original
+     * @param string $query
+     * @return array
      */
     protected function generateSearchSuggestions(string $query): array
     {
         $suggestions = [];
-        
-        // Remove palavras comuns que podem atrapalhar a busca
+
         $commonWords = ['the', 'a', 'an', 'and', 'or', 'but', 'in', 'on', 'at', 'to', 'for', 'of', 'with', 'by'];
         $words = explode(' ', strtolower(trim($query)));
         $filteredWords = array_diff($words, $commonWords);
 
         if (count($filteredWords) > 1) {
-            // Tenta buscar com palavras individuais
             foreach ($filteredWords as $word) {
                 if (strlen($word) > 2) {
                     $wordResults = $this->searchMovies($word, 1);
                     if ($wordResults && $wordResults->hasResults()) {
                         $suggestions[] = $word;
-                        break; // Adiciona apenas uma sugestão por palavra
+                        break;
                     }
                 }
             }
         }
 
-        // Tenta busca por gênero se o termo se parece com um gênero
         $genreSuggestions = $this->genreService->searchGenresByName($query);
         if (!empty($genreSuggestions)) {
             foreach ($genreSuggestions as $genre) {
@@ -154,38 +287,44 @@ class TmdbSearchService extends TmdbBaseService implements TmdbSearchServiceInte
     }
 
     /**
-     * Busca avançada com múltiplos filtros
+     ** Busca avançada com múltiplos filtros
+     * @param array $criteria
+     * @return SearchResultDTO|null
      */
     public function advancedSearch(array $criteria): ?SearchResultDTO
     {
         $endpoint = '/discover/movie';
         $params = $this->buildAdvancedSearchParams($criteria);
-        
+
         $results = $this->makeRequest($endpoint, $params);
-        
+
         if (!$results) {
             return null;
         }
 
-        // Enriquecer resultados com informações de gêneros
         if (isset($results['results']) && is_array($results['results'])) {
-            $results['results'] = array_map(
-                [$this->genreService, 'enrichMovieWithGenres'],
-                $results['results']
-            );
+            $results['results'] = array_map(function ($movie) {
+                $movie = $this->genreService->enrichMovieWithGenres($movie);
+
+                $movie['poster_url'] = $this->getPosterUrl($movie['poster_path'] ?? null);
+                $movie['backdrop_url'] = $this->getBackdropUrl($movie['backdrop_path'] ?? null);
+
+                return $movie;
+            }, $results['results']);
         }
 
         return SearchResultDTO::fromArray($results, '', $criteria);
     }
 
     /**
-     * Constrói parâmetros para busca avançada
+     ** Constrói parâmetros para busca avançada
+     * @param array $criteria
+     * @return array
      */
     protected function buildAdvancedSearchParams(array $criteria): array
     {
         $params = [];
 
-        // Filtros básicos
         if (isset($criteria['genre_id'])) {
             $params['with_genres'] = $criteria['genre_id'];
         }
@@ -210,17 +349,18 @@ class TmdbSearchService extends TmdbBaseService implements TmdbSearchServiceInte
             $params['release_date.lte'] = $criteria['release_date_max'];
         }
 
-        // Ordenação
         $params['sort_by'] = $criteria['sort_by'] ?? 'popularity.desc';
 
-        // Paginação
         $params['page'] = $criteria['page'] ?? 1;
 
         return $this->validatePaginationParams($params);
     }
 
     /**
-     * Busca por popularidade com filtros
+     ** Busca por popularidade com filtros
+     * @param array $filters
+     * @param int $page
+     * @return SearchResultDTO|null
      */
     public function searchPopular(array $filters = [], int $page = 1): ?SearchResultDTO
     {
@@ -233,16 +373,58 @@ class TmdbSearchService extends TmdbBaseService implements TmdbSearchServiceInte
     }
 
     /**
-     * Busca por melhor avaliação com filtros
+     ** Busca por melhor avaliação com filtros
+     * @param array $filters
+     * @param int $page
+     * @return SearchResultDTO|null
      */
     public function searchTopRated(array $filters = [], int $page = 1): ?SearchResultDTO
     {
         $criteria = array_merge([
             'sort_by' => 'vote_average.desc',
-            'vote_count.gte' => 100, // Apenas filmes com pelo menos 100 votos
+            'vote_count.gte' => 100,
             'page' => $page
         ], $filters);
 
         return $this->advancedSearch($criteria);
+    }
+
+    /**
+     ** Ordena resultados
+     * @param array $movies
+     * @param string $sortBy
+     * @return array
+     */
+    protected function sortResults(array $movies, string $sortBy): array
+    {
+        switch ($sortBy) {
+            case 'title_asc':
+                usort($movies, fn($a, $b) => strcasecmp($a['title'] ?? '', $b['title'] ?? ''));
+                break;
+            case 'title_desc':
+                usort($movies, fn($a, $b) => strcasecmp($b['title'] ?? '', $a['title'] ?? ''));
+                break;
+            case 'release_date_asc':
+                usort($movies, fn($a, $b) => ($a['release_date'] ?? '0000-00-00') <=> ($b['release_date'] ?? '0000-00-00'));
+                break;
+            case 'release_date_desc':
+                usort($movies, fn($a, $b) => ($b['release_date'] ?? '0000-00-00') <=> ($a['release_date'] ?? '0000-00-00'));
+                break;
+            case 'vote_average_asc':
+                usort($movies, fn($a, $b) => ($a['vote_average'] ?? 0) <=> ($b['vote_average'] ?? 0));
+                break;
+            case 'vote_average_desc':
+                usort($movies, fn($a, $b) => ($b['vote_average'] ?? 0) <=> ($a['vote_average'] ?? 0));
+                break;
+            case 'popularity_asc':
+                usort($movies, fn($a, $b) => ($a['popularity'] ?? 0) <=> ($b['popularity'] ?? 0));
+                break;
+            case 'popularity_desc':
+            default:
+                usort($movies, fn($a, $b) => ($b['popularity'] ?? 0) <=> ($a['popularity'] ?? 0));
+                break;
+        }
+
+        return $movies;
     }
 }

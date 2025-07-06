@@ -25,13 +25,15 @@ class TmdbServiceProvider extends ServiceProvider
         
         $this->app->bind(TmdbSearchServiceInterface::class, function ($app) {
             return new TmdbSearchService(
-                $app->make(TmdbGenreServiceInterface::class)
+                $app->make(TmdbGenreServiceInterface::class),
+                $app->make(TmdbImageServiceInterface::class)
             );
         });
 
         $this->app->bind(TmdbMovieServiceInterface::class, function ($app) {
             return new TmdbMovieService(
-                $app->make(TmdbGenreServiceInterface::class)
+                $app->make(TmdbGenreServiceInterface::class),
+                $app->make(TmdbImageServiceInterface::class)
             );
         });
 

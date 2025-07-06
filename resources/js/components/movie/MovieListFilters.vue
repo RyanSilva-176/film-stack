@@ -4,9 +4,9 @@
             <!-- Search and Filters Row -->
             <div class="flex flex-col lg:flex-row gap-4 items-start lg:items-center justify-between">
                 <!-- Search Input -->
-                <div class="relative flex-1 max-w-md">
+                <div v-if="showSearch" class="relative flex-1 max-w-md">
                     <FontAwesomeIcon 
-                        icon="search" 
+                        icon="fa-solid fa-magnifying-glass" 
                         class="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" 
                     />
                     <input
@@ -21,7 +21,7 @@
                         @click="clearSearch"
                         class="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-white"
                     >
-                        <FontAwesomeIcon icon="times" class="h-4 w-4" />
+                        <FontAwesomeIcon icon="fa-solid fa-times" class="h-4 w-4" />
                     </button>
                 </div>
 
@@ -29,30 +29,49 @@
                 <div class="flex flex-wrap gap-2 items-center">
                     <!-- Genre Filter -->
                     <select
+                        v-if="showGenre"
                         v-model="localGenreFilter"
                         @change="handleFilterChange"
                         class="px-3 py-2 bg-gray-800 border border-gray-700 rounded-lg text-white text-sm focus:outline-none focus:ring-2 focus:ring-red-500"
                     >
                         <option value="">Todos os gêneros</option>
-                        <option v-for="genre in availableGenres" :key="genre.id" :value="genre.id">
+                        <option v-for="genre in (genres || availableGenres)" :key="genre.id" :value="genre.id">
                             {{ genre.name }}
+                        </option>
+                    </select>
+
+                    <!-- Year Filter -->
+                    <select
+                        v-if="showYear"
+                        v-model="localYear"
+                        @change="handleFilterChange"
+                        class="px-3 py-2 bg-gray-800 border border-gray-700 rounded-lg text-white text-sm focus:outline-none focus:ring-2 focus:ring-red-500"
+                    >
+                        <option value="">Todos os anos</option>
+                        <option v-for="year in yearOptions" :key="year" :value="year">
+                            {{ year }}
                         </option>
                     </select>
 
                     <!-- Sort Options -->
                     <select
+                        v-if="showSort"
                         v-model="localSortBy"
                         @change="handleFilterChange"
                         class="px-3 py-2 bg-gray-800 border border-gray-700 rounded-lg text-white text-sm focus:outline-none focus:ring-2 focus:ring-red-500"
                     >
+                        <option value="popularity.desc">Mais Populares</option>
+                        <option value="popularity.asc">Menos Populares</option>
+                        <option value="vote_average.desc">Melhor Avaliados</option>
+                        <option value="vote_average.asc">Pior Avaliados</option>
+                        <option value="release_date.desc">Mais Recentes</option>
+                        <option value="release_date.asc">Mais Antigos</option>
+                        <option value="original_title.asc">A-Z</option>
+                        <option value="original_title.desc">Z-A</option>
                         <option value="added_date_desc">Adicionado recentemente</option>
                         <option value="added_date_asc">Adicionado há mais tempo</option>
                         <option value="title_asc">Título (A-Z)</option>
                         <option value="title_desc">Título (Z-A)</option>
-                        <option value="release_date_desc">Lançamento (mais recente)</option>
-                        <option value="release_date_asc">Lançamento (mais antigo)</option>
-                        <option value="rating_desc">Avaliação (maior)</option>
-                        <option value="rating_asc">Avaliação (menor)</option>
                         <option v-if="showWatchedSort" value="watched_date_desc">Assistido recentemente</option>
                         <option v-if="showWatchedSort" value="watched_date_asc">Assistido há mais tempo</option>
                     </select>
@@ -68,7 +87,7 @@
                                     : 'bg-gray-800 text-gray-400 hover:text-white hover:bg-gray-700'
                             ]"
                         >
-                            <FontAwesomeIcon icon="th" />
+                            <FontAwesomeIcon icon="fa-solid fa-th" />
                         </button>
                         <button
                             @click="handleViewChange('list')"
@@ -79,7 +98,7 @@
                                     : 'bg-gray-800 text-gray-400 hover:text-white hover:bg-gray-700'
                             ]"
                         >
-                            <FontAwesomeIcon icon="list" />
+                            <FontAwesomeIcon icon="fa-solid fa-list" />
                         </button>
                     </div>
 
@@ -93,7 +112,7 @@
                                 : 'bg-gray-800 text-gray-400 border-gray-700 hover:text-white hover:bg-gray-700'
                         ]"
                     >
-                        <FontAwesomeIcon icon="check-square" class="mr-1" />
+                        <FontAwesomeIcon icon="fa-solid fa-check-square" class="mr-1" />
                         {{ selectionMode ? 'Cancelar' : 'Selecionar' }}
                     </button>
                 </div>
@@ -162,7 +181,7 @@
 
 <script setup lang="ts">
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome';
-import { ref, watch } from 'vue';
+import { ref, watch, computed } from 'vue';
 
 // Simple debounce implementation
 function debounce(func: (...args: any[]) => void, wait: number) {
@@ -179,6 +198,12 @@ interface Genre {
 }
 
 interface Props {
+    currentFilters?: any;
+    genres?: Genre[];
+    showSearch?: boolean;
+    showGenre?: boolean;
+    showYear?: boolean;
+    showSort?: boolean;
     search?: string;
     genreFilter?: string;
     sortBy?: string;
@@ -195,6 +220,7 @@ interface Props {
 }
 
 interface Emits {
+    (e: 'filter-change', filters: any): void;
     (e: 'update:search', value: string): void;
     (e: 'update:genreFilter', value: string): void;
     (e: 'update:sortBy', value: string): void;
@@ -209,6 +235,12 @@ interface Emits {
 }
 
 const props = withDefaults(defineProps<Props>(), {
+    currentFilters: () => ({}),
+    genres: () => [],
+    showSearch: true,
+    showGenre: true,
+    showYear: false,
+    showSort: true,
     search: '',
     genreFilter: '',
     sortBy: 'added_date_desc',
@@ -226,10 +258,21 @@ const props = withDefaults(defineProps<Props>(), {
 
 const emit = defineEmits<Emits>();
 
-const localSearch = ref(props.search);
-const localGenreFilter = ref(props.genreFilter);
-const localSortBy = ref(props.sortBy);
+const localSearch = ref(props.currentFilters?.search || props.search || '');
+const localGenreFilter = ref(props.currentFilters?.genre || props.genreFilter || '');
+const localSortBy = ref(props.currentFilters?.sort || props.sortBy || 'popularity.desc');
 const localViewMode = ref(props.viewMode);
+const localYear = ref(props.currentFilters?.year || '');
+
+// Generate year options
+const yearOptions = computed(() => {
+    const currentYear = new Date().getFullYear();
+    const years = [];
+    for (let year = currentYear + 1; year >= 1950; year--) {
+        years.push(year);
+    }
+    return years;
+});
 
 // Watch for external changes
 watch(() => props.search, (newValue) => {
@@ -250,17 +293,29 @@ watch(() => props.viewMode, (newValue) => {
 
 const handleSearchDebounced = debounce((event: Event) => {
     const target = event.target as HTMLInputElement;
-    emit('update:search', target.value);
-    emit('filters-changed');
+    localSearch.value = target.value;
+    emitFilterChange();
 }, 300);
 
 const clearSearch = () => {
     localSearch.value = '';
-    emit('update:search', '');
-    emit('filters-changed');
+    emitFilterChange();
 };
 
 const handleFilterChange = () => {
+    emitFilterChange();
+};
+
+const emitFilterChange = () => {
+    const filters = {
+        search: localSearch.value,
+        genre: localGenreFilter.value,
+        year: localYear.value,
+        sort: localSortBy.value,
+    };
+    
+    emit('filter-change', filters);
+    emit('update:search', localSearch.value);
     emit('update:genreFilter', localGenreFilter.value);
     emit('update:sortBy', localSortBy.value);
     emit('filters-changed');

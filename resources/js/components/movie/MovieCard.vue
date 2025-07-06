@@ -10,8 +10,8 @@
         <!-- Poster Image -->
         <div class="relative aspect-[2/3] overflow-hidden">
             <img
-                v-if="movie.poster_url && !imageError"
-                :src="movie.poster_url"
+                v-if="(movie.poster_url || movie.poster_path) && !imageError"
+                :src="movie.poster_url || movie.poster_path || undefined"
                 :alt="movie.title"
                 class="h-full w-full object-cover"
                 loading="lazy"
@@ -22,11 +22,11 @@
 
             <!-- Placeholder for missing poster -->
             <div v-else class="flex h-full w-full items-center justify-center bg-gray-800 text-gray-400">
-                <FontAwesomeIcon icon="film" class="h-12 w-12" />
+                <Film class="h-12 w-12" />
             </div>
 
             <!-- Loading state -->
-            <div v-if="loading || (!imageLoaded && !imageError && movie.poster_url)" class="absolute inset-0 flex items-center justify-center bg-gray-800">
+            <div v-if="loading || (!imageLoaded && !imageError && (movie.poster_url || movie.poster_path))" class="absolute inset-0 flex items-center justify-center bg-gray-800">
                 <div class="h-8 w-8 animate-spin rounded-full border-4 border-gray-600 border-t-white"></div>
             </div>
 
@@ -35,31 +35,31 @@
                 v-if="showRating && movie.vote_average > 0"
                 class="absolute top-2 right-2 rounded-full bg-black/80 px-2 py-1 text-xs font-bold text-white backdrop-blur-sm"
             >
-                <FontAwesomeIcon icon="star" class="mr-1 text-yellow-400" />
+                <Star class="mr-1 h-3 w-3 text-yellow-400 fill-yellow-400" />
                 {{ movie.vote_average.toFixed(1) }}
             </div>
 
             <!-- Mobile Action Buttons -->
             <div
-                class="absolute inset-x-0 bottom-0 flex justify-center gap-2 bg-gradient-to-t from-black/80 via-black/30 to-transparent p-3 md:hidden"
+                class="absolute inset-x-0 bottom-0 flex justify-center gap-2 bg-gradient-to-t from-black/90 via-black/40 to-transparent p-2 sm:p-3 md:hidden"
             >
                 <Button
                     variant="primary"
                     size="sm"
-                    icon="info-circle"
+                    icon="fa-solid fa-info-circle"
                     rounded="full"
                     @click.stop="handleDetailsClick"
                     aria-label="Ver detalhes"
-                    class="h-10 w-10 shadow-lg"
+                    class="h-8 w-8 sm:h-10 sm:w-10 shadow-lg"
                 />
                 <Button
                     variant="ghost"
                     size="sm"
-                    icon="plus"
+                    icon="fa-solid fa-plus"
                     rounded="full"
                     @click.stop="handleAddToListClick"
                     aria-label="Adicionar à lista"
-                    class="h-10 w-10 shadow-lg"
+                    class="h-8 w-8 sm:h-10 sm:w-10 shadow-lg"
                 />
                 <!-- <Button
                     variant="ghost"
@@ -82,7 +82,7 @@
                     <Button
                         variant="primary"
                         size="sm"
-                        icon="info-circle"
+                        icon="fa-solid fa-info-circle"
                         label="Ver Detalhes"
                         full-width
                         rounded="md"
@@ -93,7 +93,7 @@
                         <Button
                             variant="ghost"
                             size="sm"
-                            icon="plus"
+                            icon="fa-solid fa-plus"
                             label="Salvar"
                             rounded="md"
                             @click.stop="handleAddToListClick"
@@ -113,9 +113,9 @@
         </div>
 
         <!-- Movie Info -->
-        <div v-if="showDetails" class="flex-grow space-y-2 p-3 flex flex-col">
+        <div v-if="showDetails" class="flex-grow space-y-1 sm:space-y-2 p-2 sm:p-3 flex flex-col">
             <!-- Title -->
-            <h3 class="line-clamp-2 text-sm font-semibold text-white transition-colors group-hover:text-red-400 min-h-[2.5rem] flex items-start">
+            <h3 class="line-clamp-2 text-xs sm:text-sm font-semibold text-white transition-colors group-hover:text-red-400 min-h-[2rem] sm:min-h-[2.5rem] flex items-start leading-tight">
                 {{ movie.title }}
             </h3>
 
@@ -129,14 +129,14 @@
                 <span
                     v-for="genre in [...movieGenres].sort((a, b) => a.localeCompare(b))"
                     :key="genre"
-                    class="whitespace-nowrap rounded-full bg-gray-700 px-2 py-1 text-xs text-gray-300 flex-shrink-0"
+                    class="whitespace-nowrap rounded-full bg-gray-700 px-2 py-0.5 text-xs text-gray-300 flex-shrink-0"
                 >
                     {{ genre }}
                 </span>
             </div>
 
             <!-- Overview -->
-            <p v-if="movie.overview" class="line-clamp-3 text-xs text-gray-400 flex-grow">
+            <p v-if="movie.overview && !showGenres" class="line-clamp-2 sm:line-clamp-3 text-xs text-gray-400 flex-grow">
                 {{ movie.overview }}
             </p>
         </div>
@@ -145,7 +145,7 @@
 
 <script setup lang="ts">
 import Button from '@/components/ui/Button.vue';
-import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome';
+import { Film, Star } from 'lucide-vue-next';
 import { gsap } from 'gsap';
 import { computed, onMounted, ref } from 'vue';
 import { useMoviesStore } from '@/stores/movies';

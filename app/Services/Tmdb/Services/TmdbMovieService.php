@@ -4,6 +4,7 @@ namespace App\Services\Tmdb\Services;
 
 use App\Services\Tmdb\Contracts\TmdbMovieServiceInterface;
 use App\Services\Tmdb\Contracts\TmdbGenreServiceInterface;
+use App\Services\Tmdb\Contracts\TmdbImageServiceInterface;
 use App\Services\Tmdb\DTOs\MovieDTO;
 use Illuminate\Support\Facades\Log;
 use Exception;
@@ -11,11 +12,13 @@ use Exception;
 class TmdbMovieService extends TmdbBaseService implements TmdbMovieServiceInterface
 {
     protected TmdbGenreServiceInterface $genreService;
+    protected TmdbImageServiceInterface $imageService;
 
-    public function __construct(TmdbGenreServiceInterface $genreService)
+    public function __construct(TmdbGenreServiceInterface $genreService, TmdbImageServiceInterface $imageService)
     {
         parent::__construct();
         $this->genreService = $genreService;
+        $this->imageService = $imageService;
     }
 
     /**
@@ -31,10 +34,10 @@ class TmdbMovieService extends TmdbBaseService implements TmdbMovieServiceInterf
         return $this->enrichResultsWithGenres($results);
     }
 
-    // TODO: Terminar de adicionar as tags de documentação
-
     /**
-     * Busca filmes em cartaz com paginação
+     ** Busca filmes em cartaz com paginação
+     * @param int $page
+     * @return array|null
      */
     public function getNowPlayingMovies(int $page = 1): ?array
     {
@@ -45,7 +48,9 @@ class TmdbMovieService extends TmdbBaseService implements TmdbMovieServiceInterf
     }
 
     /**
-     * Busca filmes mais bem avaliados com paginação
+     ** Busca filmes mais bem avaliados com paginação
+     * @param int $page
+     * @return array|null
      */
     public function getTopRatedMovies(int $page = 1): ?array
     {
@@ -57,6 +62,8 @@ class TmdbMovieService extends TmdbBaseService implements TmdbMovieServiceInterf
 
     /**
      * Busca próximos lançamentos com paginação
+     * @param int $page
+     * @return array|null
      */
     public function getUpcomingMovies(int $page = 1): ?array
     {
@@ -67,7 +74,9 @@ class TmdbMovieService extends TmdbBaseService implements TmdbMovieServiceInterf
     }
 
     /**
-     * Busca detalhes de um filme específico
+     ** Busca detalhes de um filme específico
+     * @param int $movieId
+     * @param array $appendTo
      */
     public function getMovieDetails(int $movieId, array $appendTo = []): ?MovieDTO
     {
@@ -86,14 +95,16 @@ class TmdbMovieService extends TmdbBaseService implements TmdbMovieServiceInterf
             return null;
         }
 
-        // Enriquecer com informações de gêneros
         $movie = $this->genreService->enrichMovieWithGenres($movie);
 
         return MovieDTO::fromArray($movie);
     }
 
     /**
-     * Busca múltiplos filmes por IDs
+     ** Busca múltiplos filmes por IDs
+     * @param array $movieIds
+     * @param array $appendTo
+     * @return array
      */
     public function getMoviesByIds(array $movieIds, array $appendTo = []): array
     {
@@ -117,7 +128,10 @@ class TmdbMovieService extends TmdbBaseService implements TmdbMovieServiceInterf
     }
 
     /**
-     * Busca filmes trending
+     ** Busca filmes trending
+     * @param string $timeWindow
+     * @param int $page
+     * @return array|null
      */
     public function getTrendingMovies(string $timeWindow = 'day', int $page = 1): ?array
     {
@@ -128,7 +142,10 @@ class TmdbMovieService extends TmdbBaseService implements TmdbMovieServiceInterf
     }
 
     /**
-     * Descobre filmes com filtros avançados
+     ** Descobre filmes com filtros avançados
+     * @param array $filters
+     * @param int $page
+     * @return array|null
      */
     public function discoverMovies(array $filters = [], int $page = 1): ?array
     {
@@ -141,7 +158,11 @@ class TmdbMovieService extends TmdbBaseService implements TmdbMovieServiceInterf
     }
 
     /**
-     * Busca filmes por gênero específico
+     ** Busca filmes por gênero específico
+     * @param int $genreId
+     * @param int $page
+     * @param array $additionalFilters
+     * @return array|null
      */
     public function getMoviesByGenre(int $genreId, int $page = 1, array $additionalFilters = []): ?array
     {
@@ -154,7 +175,10 @@ class TmdbMovieService extends TmdbBaseService implements TmdbMovieServiceInterf
     }
 
     /**
-     * Busca filmes similares
+     ** Busca filmes similares
+     * @param int $movieId
+     * @param int $page
+     * @return array|null
      */
     public function getSimilarMovies(int $movieId, int $page = 1): ?array
     {
@@ -165,7 +189,10 @@ class TmdbMovieService extends TmdbBaseService implements TmdbMovieServiceInterf
     }
 
     /**
-     * Busca recomendações de filmes
+     ** Busca recomendações de filmes
+     * @param int $movieId
+     * @param int $page
+     * @return array|null
      */
     public function getMovieRecommendations(int $movieId, int $page = 1): ?array
     {
@@ -176,7 +203,9 @@ class TmdbMovieService extends TmdbBaseService implements TmdbMovieServiceInterf
     }
 
     /**
-     * Busca créditos do filme (elenco e equipe)
+     ** Busca créditos do filme
+     * @param int $movieId
+     * @return array|null
      */
     public function getMovieCredits(int $movieId): ?array
     {
@@ -184,7 +213,9 @@ class TmdbMovieService extends TmdbBaseService implements TmdbMovieServiceInterf
     }
 
     /**
-     * Busca vídeos do filme (trailers, teasers, etc.)
+     ** Busca vídeos do filme
+     * @param int $movieId
+     * @return array|null
      */
     public function getMovieVideos(int $movieId): ?array
     {
@@ -192,7 +223,9 @@ class TmdbMovieService extends TmdbBaseService implements TmdbMovieServiceInterf
     }
 
     /**
-     * Busca imagens do filme (posters, backdrops)
+     ** Busca imagens do filme
+     * @param int $movieId
+     * @return array|null
      */
     public function getMovieImages(int $movieId): ?array
     {
@@ -200,7 +233,10 @@ class TmdbMovieService extends TmdbBaseService implements TmdbMovieServiceInterf
     }
 
     /**
-     * Busca reviews do filme
+     ** Busca reviews do filme
+     * @param int $movieId
+     * @param int $page
+     * @return array|null
      */
     public function getMovieReviews(int $movieId, int $page = 1): ?array
     {
@@ -209,7 +245,9 @@ class TmdbMovieService extends TmdbBaseService implements TmdbMovieServiceInterf
     }
 
     /**
-     * Busca palavras-chave do filme
+     ** Busca palavras-chave do filme
+     * @param int $movieId
+     * @return array|null
      */
     public function getMovieKeywords(int $movieId): ?array
     {
@@ -217,7 +255,9 @@ class TmdbMovieService extends TmdbBaseService implements TmdbMovieServiceInterf
     }
 
     /**
-     * Busca informações de lançamento do filme
+     ** Busca informações de lançamento do filme
+     * @param int $movieId
+     * @return array|null
      */
     public function getMovieReleaseDates(int $movieId): ?array
     {
@@ -225,7 +265,10 @@ class TmdbMovieService extends TmdbBaseService implements TmdbMovieServiceInterf
     }
 
     /**
-     * Busca filme por ID externo (IMDB, TVDB, etc.)
+     ** Busca filme por ID externo
+     * @param string $externalId
+     * @param string $source
+     * @return MovieDTO|null
      */
     public function findMovieByExternalId(string $externalId, string $source = 'imdb_id'): ?MovieDTO
     {
@@ -244,7 +287,11 @@ class TmdbMovieService extends TmdbBaseService implements TmdbMovieServiceInterf
     }
 
     /**
-     * Busca filmes por ano específico
+     ** Busca filmes por ano específico
+     * @param int $year
+     * @param int $page
+     * @param string $sortBy
+     * @return array|null
      */
     public function getMoviesByYear(int $year, int $page = 1, string $sortBy = 'popularity.desc'): ?array
     {
@@ -255,7 +302,10 @@ class TmdbMovieService extends TmdbBaseService implements TmdbMovieServiceInterf
     }
 
     /**
-     * Busca filmes por década
+     ** Busca filmes por década
+     * @param int $decade
+     * @param int $page
+     * @return array|null
      */
     public function getMoviesByDecade(int $decade, int $page = 1): ?array
     {
@@ -270,7 +320,11 @@ class TmdbMovieService extends TmdbBaseService implements TmdbMovieServiceInterf
     }
 
     /**
-     * Busca filmes por avaliação mínima
+     ** Busca filmes por avaliação mínima
+     * @param float $minRating
+     * @param int $page
+     * @param int $minVotes
+     * @return array|null
      */
     public function getMoviesByMinRating(float $minRating, int $page = 1, int $minVotes = 100): ?array
     {
@@ -282,7 +336,9 @@ class TmdbMovieService extends TmdbBaseService implements TmdbMovieServiceInterf
     }
 
     /**
-     * Enriquece resultados com informações de gêneros
+     ** Traz ps gêneros e URLs de imagens
+     * @param array|null $results
+     * @return array|null
      */
     protected function enrichResultsWithGenres(?array $results): ?array
     {
@@ -290,16 +346,22 @@ class TmdbMovieService extends TmdbBaseService implements TmdbMovieServiceInterf
             return $results;
         }
 
-        $results['results'] = array_map(
-            [$this->genreService, 'enrichMovieWithGenres'],
-            $results['results']
-        );
+        $results['results'] = array_map(function ($movie) {
+            $movie = $this->genreService->enrichMovieWithGenres($movie);
+
+            $movie['poster_url'] = $this->imageService->getPosterUrl($movie['poster_path'] ?? null);
+            $movie['backdrop_url'] = $this->imageService->getBackdropUrl($movie['backdrop_path'] ?? null);
+
+            return $movie;
+        }, $results['results']);
 
         return $results;
     }
 
     /**
-     * Converte array de filmes para DTOs
+     ** Converte array de filmes para DTOs
+     * @param array $movies
+     * @return array
      */
     public function convertToMovieDTOs(array $movies): array
     {
@@ -310,7 +372,10 @@ class TmdbMovieService extends TmdbBaseService implements TmdbMovieServiceInterf
     }
 
     /**
-     * Busca filmes com informações completas para listagem
+     ** Busca filmes com informações completas para listagem
+     * @param string $listType
+     * @param int $page
+     * @return array|null
      */
     public function getMoviesForListing(string $listType = 'popular', int $page = 1): ?array
     {

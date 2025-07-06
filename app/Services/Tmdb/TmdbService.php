@@ -86,6 +86,20 @@ class TmdbService
     }
 
     /**
+     * Busca filmes por gênero usando busca avançada
+     */
+    public function searchByGenre(int $genreId, int $page = 1, array $additionalFilters = []): ?SearchResultDTO
+    {
+        $criteria = array_merge([
+            'genre_id' => $genreId,
+            'page' => $page,
+            'sort_by' => 'popularity.desc'
+        ], $additionalFilters);
+
+        return $this->searchService->advancedSearch($criteria);
+    }
+
+    /**
      * Busca filmes por gênero específico
      */
     public function getMoviesByGenre(int $genreId, int $page = 1, array $additionalFilters = []): ?array

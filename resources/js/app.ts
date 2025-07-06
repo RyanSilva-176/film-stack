@@ -47,6 +47,10 @@ import {
     faMagnifyingGlass,
     faTachometerAlt,
     faEllipsisH,
+    faSearch,
+    faTh,
+    faList,
+    faCheckSquare,
 } from '@fortawesome/free-solid-svg-icons';
 
 import {faGoogle} from '@fortawesome/free-brands-svg-icons';
@@ -87,6 +91,10 @@ library.add(
     faMagnifyingGlass,
     faTachometerAlt,
     faEllipsisH,
+    faSearch,
+    faTh,
+    faList,
+    faCheckSquare,
     faGoogle
 );
 

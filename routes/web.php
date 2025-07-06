@@ -4,6 +4,7 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Auth\SocialiteController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\MovieListController;
+use App\Http\Controllers\SearchController;
 use Inertia\Inertia;
 
 Route::get('/', function () {
@@ -13,6 +14,9 @@ Route::get('/', function () {
 Route::middleware(['auth', 'verified', 'web'])->group(function () {
     Route::get('dashboard', [DashboardController::class, 'index'])->name('dashboard');
     
+    // Search routes
+    Route::get('search', [SearchController::class, 'index'])->name('search');
+    Route::get('genres', [SearchController::class, 'genres'])->name('genres');
 
     Route::get('lists/liked', [MovieListController::class, 'likedPage'])->name('lists.liked');
     Route::get('lists/watchlist', [MovieListController::class, 'watchlistPage'])->name('lists.watchlist');

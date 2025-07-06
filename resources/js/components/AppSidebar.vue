@@ -15,6 +15,11 @@ const mainNavItems: NavItem[] = [
         icon: LayoutGrid,
     },
     {
+        title: 'Gêneros',
+        href: '/genres',
+        icon: Folder,
+    },
+    {
         title: 'Curtidos',
         href: '/lists/liked',
         icon: Heart,
