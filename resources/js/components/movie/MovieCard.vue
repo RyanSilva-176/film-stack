@@ -1,6 +1,6 @@
 <template>
     <div
-        class="movie-card group relative cursor-pointer overflow-hidden rounded-lg bg-gray-900 transition-shadow duration-300 w-full h-full flex flex-col max-w-full"
+        class="movie-card group relative flex h-full w-full max-w-full cursor-pointer flex-col overflow-hidden rounded-lg bg-gray-900 transition-shadow duration-300"
         :class="[loading ? 'animate-pulse' : '']"
         @click="handleClick"
         ref="cardRef"
@@ -26,7 +26,10 @@
             </div>
 
             <!-- Loading state -->
-            <div v-if="loading || (!imageLoaded && !imageError && (movie.poster_url || movie.poster_path))" class="absolute inset-0 flex items-center justify-center bg-gray-800">
+            <div
+                v-if="loading || (!imageLoaded && !imageError && (movie.poster_url || movie.poster_path))"
+                class="absolute inset-0 flex items-center justify-center bg-gray-800"
+            >
                 <div class="h-8 w-8 animate-spin rounded-full border-4 border-gray-600 border-t-white"></div>
             </div>
 
@@ -35,8 +38,16 @@
                 v-if="showRating && movie.vote_average > 0"
                 class="absolute top-2 right-2 rounded-full bg-black/80 px-2 py-1 text-xs font-bold text-white backdrop-blur-sm"
             >
-                <Star class="mr-1 h-3 w-3 text-yellow-400 fill-yellow-400" />
+                <FontAwesomeIcon icon="star" class="mr-1 text-yellow-400" />
                 {{ movie.vote_average.toFixed(1) }}
+            </div>
+
+            <!-- List Type Tags -->
+            <div v-if="listTags.length > 0" class="absolute top-2 left-2 flex flex-col gap-1">
+                <div v-for="tag in listTags" :key="tag.type" class="rounded-full px-2 py-1 text-xs font-medium backdrop-blur-sm" :class="tag.class">
+                    <FontAwesomeIcon :icon="tag.icon" class="mr-1" />
+                    {{ tag.label }}
+                </div>
             </div>
 
             <!-- Mobile Action Buttons -->
@@ -50,7 +61,7 @@
                     rounded="full"
                     @click.stop="handleDetailsClick"
                     aria-label="Ver detalhes"
-                    class="h-8 w-8 sm:h-10 sm:w-10 shadow-lg"
+                    class="h-8 w-8 shadow-lg sm:h-10 sm:w-10"
                 />
                 <Button
                     variant="ghost"
@@ -59,7 +70,7 @@
                     rounded="full"
                     @click.stop="handleAddToListClick"
                     aria-label="Adicionar à lista"
-                    class="h-8 w-8 sm:h-10 sm:w-10 shadow-lg"
+                    class="h-8 w-8 shadow-lg sm:h-10 sm:w-10"
                 />
                 <!-- <Button
                     variant="ghost"
@@ -113,30 +124,35 @@
         </div>
 
         <!-- Movie Info -->
-        <div v-if="showDetails" class="flex-grow space-y-1 sm:space-y-2 p-2 sm:p-3 flex flex-col">
+        <div v-if="showDetails" class="flex flex-grow flex-col space-y-0.5 p-2 sm:space-y-0.5 sm:p-3">
             <!-- Title -->
-            <h3 class="line-clamp-2 text-xs sm:text-sm font-semibold text-white transition-colors group-hover:text-red-400 min-h-[2rem] sm:min-h-[2.5rem] flex items-start leading-tight">
+            <h3
+                class="line-clamp-2 flex min-h-[1.7rem] items-start text-xs leading-tight font-semibold text-white transition-colors group-hover:text-red-400 sm:min-h-[1.9rem] sm:text-sm"
+            >
                 {{ movie.title }}
             </h3>
 
             <!-- Release Year -->
-            <p class="text-xs text-gray-400">
+            <p class="mt-0.5 text-xs text-gray-400">
                 {{ releaseYear }}
             </p>
 
             <!-- Genres -->
-            <div v-if="showGenres && movieGenres.length > 0" class="flex gap-1 overflow-x-auto scrollbar-thin scrollbar-thumb-gray-700 scrollbar-track-transparent py-1">
+            <div
+                v-if="movieGenres.length > 0"
+                class="scrollbar-thin scrollbar-thumb-gray-700 scrollbar-track-transparent flex gap-1 overflow-x-auto py-1"
+            >
                 <span
                     v-for="genre in [...movieGenres].sort((a, b) => a.localeCompare(b))"
                     :key="genre"
-                    class="whitespace-nowrap rounded-full bg-gray-700 px-2 py-0.5 text-xs text-gray-300 flex-shrink-0"
+                    class="flex-shrink-0 rounded-full bg-gray-700 px-2 py-0.5 text-xs whitespace-nowrap text-gray-300"
                 >
                     {{ genre }}
                 </span>
             </div>
 
             <!-- Overview -->
-            <p v-if="movie.overview && !showGenres" class="line-clamp-2 sm:line-clamp-3 text-xs text-gray-400 flex-grow">
+            <p v-if="movie.overview" class="line-clamp-2 text-xs text-gray-400">
                 {{ movie.overview }}
             </p>
         </div>
@@ -145,11 +161,12 @@
 
 <script setup lang="ts">
 import Button from '@/components/ui/Button.vue';
-import { Film, Star } from 'lucide-vue-next';
-import { gsap } from 'gsap';
-import { computed, onMounted, ref } from 'vue';
 import { useMoviesStore } from '@/stores/movies';
 import type { Movie } from '@/types/movies';
+import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome';
+import { gsap } from 'gsap';
+import { Film } from 'lucide-vue-next';
+import { computed, onMounted, ref } from 'vue';
 
 interface Props {
     movie: Movie;
@@ -158,6 +175,7 @@ interface Props {
     showDetails?: boolean;
     showGenres?: boolean;
     loading?: boolean;
+    listTypes?: Array<'liked' | 'watchlist' | 'watched' | 'custom'>;
 }
 
 const props = withDefaults(defineProps<Props>(), {
@@ -166,6 +184,7 @@ const props = withDefaults(defineProps<Props>(), {
     showDetails: true,
     showGenres: false,
     loading: false,
+    listTypes: () => [],
 });
 
 const emit = defineEmits<{
@@ -189,8 +208,56 @@ const releaseYear = computed(() => {
 });
 
 const movieGenres = computed(() => {
-    if (!props.movie.genre_ids || props.movie.genre_ids.length === 0) return [];
-    return moviesStore.getGenreNames(props.movie.genre_ids);
+    if (props.movie.genre_names && Array.isArray(props.movie.genre_names)) {
+        return props.movie.genre_names;
+    }
+
+    if (props.movie.genre_ids && Array.isArray(props.movie.genre_ids) && props.movie.genre_ids.length > 0) {
+        return moviesStore.getGenreNames(props.movie.genre_ids);
+    }
+
+    if (props.movie.genres && Array.isArray(props.movie.genres)) {
+        return props.movie.genres.map((genre) => genre.name);
+    }
+
+    return [];
+});
+
+const listTags = computed(() => {
+    if (!props.listTypes || props.listTypes.length === 0) return [];
+
+    return props.listTypes.map((type) => {
+        switch (type) {
+            case 'liked':
+                return {
+                    type,
+                    label: 'Curtido',
+                    icon: 'heart',
+                    class: 'bg-red-500/80 text-white',
+                };
+            case 'watchlist':
+                return {
+                    type,
+                    label: 'Lista',
+                    icon: 'bookmark',
+                    class: 'bg-blue-500/80 text-white',
+                };
+            case 'watched':
+                return {
+                    type,
+                    label: 'Assistido',
+                    icon: 'check-circle',
+                    class: 'bg-green-500/80 text-white',
+                };
+            case 'custom':
+                return {
+                    type,
+                    label: 'Personalizada',
+                    icon: 'list',
+                    class: 'bg-purple-500/80 text-white',
+                };
+        }
+    });
 });
 
 const handleClick = () => {

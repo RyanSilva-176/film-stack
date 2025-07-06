@@ -68,13 +68,13 @@ class TmdbGenreService extends TmdbBaseService implements TmdbGenreServiceInterf
      */
     public function enrichMovieWithGenres(array $movie): array
     {
-        if (isset($movie['genre_ids']) && !isset($movie['genres'])) {
+        if (isset($movie['genre_ids']) && (!isset($movie['genres']) || empty($movie['genres']))) {
             $genreNames = $this->mapGenreIdsToNames($movie['genre_ids']);
             $movie['genre_names'] = $genreNames;
-        }
-
-        if (isset($movie['genres'])) {
+        } elseif (isset($movie['genres']) && !empty($movie['genres'])) {
             $movie['genre_names'] = array_column($movie['genres'], 'name');
+        } else {
+            $movie['genre_names'] = [];
         }
 
         return $movie;

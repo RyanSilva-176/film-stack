@@ -83,6 +83,15 @@ class TmdbSearchService extends TmdbBaseService implements TmdbSearchServiceInte
                 $movie['poster_url'] = $this->getPosterUrl($movie['poster_path'] ?? null);
                 $movie['backdrop_url'] = $this->getBackdropUrl($movie['backdrop_path'] ?? null);
 
+                // Garante que campos essenciais estejam presentes
+                $movie['overview'] = $movie['overview'] ?? '';
+                $movie['release_date'] = $movie['release_date'] ?? null;
+                $movie['vote_average'] = (float) ($movie['vote_average'] ?? 0);
+                $movie['vote_count'] = (int) ($movie['vote_count'] ?? 0);
+                $movie['adult'] = (bool) ($movie['adult'] ?? false);
+                $movie['video'] = (bool) ($movie['video'] ?? false);
+                $movie['popularity'] = (float) ($movie['popularity'] ?? 0);
+
                 return $movie;
             }, $results['results']);
 
@@ -117,6 +126,15 @@ class TmdbSearchService extends TmdbBaseService implements TmdbSearchServiceInte
 
                 $movie['poster_url'] = $this->getPosterUrl($movie['poster_path'] ?? null);
                 $movie['backdrop_url'] = $this->getBackdropUrl($movie['backdrop_path'] ?? null);
+
+                // Garante que campos essenciais estejam presentes
+                $movie['overview'] = $movie['overview'] ?? '';
+                $movie['release_date'] = $movie['release_date'] ?? null;
+                $movie['vote_average'] = (float) ($movie['vote_average'] ?? 0);
+                $movie['vote_count'] = (int) ($movie['vote_count'] ?? 0);
+                $movie['adult'] = (bool) ($movie['adult'] ?? false);
+                $movie['video'] = (bool) ($movie['video'] ?? false);
+                $movie['popularity'] = (float) ($movie['popularity'] ?? 0);
 
                 return $movie;
             }, $results['results']);
@@ -190,6 +208,15 @@ class TmdbSearchService extends TmdbBaseService implements TmdbSearchServiceInte
                     $item = $this->genreService->enrichMovieWithGenres($item);
                     $item['poster_url'] = $this->getPosterUrl($item['poster_path'] ?? null);
                     $item['backdrop_url'] = $this->getBackdropUrl($item['backdrop_path'] ?? null);
+                    
+                    // Garante que campos essenciais estejam presentes para filmes
+                    $item['overview'] = $item['overview'] ?? '';
+                    $item['release_date'] = $item['release_date'] ?? null;
+                    $item['vote_average'] = (float) ($item['vote_average'] ?? 0);
+                    $item['vote_count'] = (int) ($item['vote_count'] ?? 0);
+                    $item['adult'] = (bool) ($item['adult'] ?? false);
+                    $item['video'] = (bool) ($item['video'] ?? false);
+                    $item['popularity'] = (float) ($item['popularity'] ?? 0);
                 }
                 return $item;
             }, $results['results']);

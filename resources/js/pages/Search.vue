@@ -3,7 +3,7 @@ import { ref, computed, onMounted, watch } from 'vue';
 import { Head, router } from '@inertiajs/vue3';
 import { useSearchStore } from '@/stores/search';
 import { useUserListsStore } from '@/stores/userLists';
-import MovieCard from '@/components/movie/MovieCard.vue';
+import MovieCardWithTags from '@/components/movie/MovieCardWithTags.vue';
 import MovieListFilters from '@/components/movie/MovieListFilters.vue';
 import SearchResultsHeader from '@/components/search/SearchResultsHeader.vue';
 import MovieListPagination from '@/components/movie/MovieListPagination.vue';
@@ -32,12 +32,10 @@ const props = withDefaults(defineProps<Props>(), {
 const searchStore = useSearchStore();
 const userListsStore = useUserListsStore();
 
-// State
 const initialLoad = ref(true);
 const selectedMovie = ref<any>(null);
 const showMovieDetails = ref(false);
 
-// Computed
 const genreId = computed(() => props.genre ? Number(props.genre) : undefined);
 const yearValue = computed(() => props.year ? Number(props.year) : undefined);
 const pageValue = computed(() => props.page ? Number(props.page) : 1);
@@ -66,7 +64,6 @@ const currentFilters = computed(() => ({
     sort: props.sort || 'popularity.desc',
 }));
 
-// Methods
 const performSearch = async () => {
     if (props.q) {
         const filters: any = {};
@@ -85,7 +82,7 @@ const performSearch = async () => {
 
 const handleFilterChange = (filters: any) => {
     const params: any = {
-        page: 1, // Reset to first page when filters change
+        page: 1,
     };
 
     if (props.q) {
@@ -119,20 +116,16 @@ const handleFilterChange = (filters: any) => {
 };
 
 const handleMovieClick = (movie: any) => {
-    // Open movie details sidebar
     selectedMovie.value = movie;
     showMovieDetails.value = true;
 };
 
 const handleMovieDetails = (movie: any) => {
-    // Open movie details sidebar
     selectedMovie.value = movie;
     showMovieDetails.value = true;
 };
 
 const handleAddToList = (movie: any) => {
-    // Open add to list modal
-    // For now, add to liked list
     userListsStore.toggleLike(movie.id);
 };
 
@@ -152,7 +145,6 @@ const handlePageChange = (page: number) => {
     });
 };
 
-// Watch for prop changes
 watch(
     () => [props.q, props.genre, props.year, props.sort, props.page],
     async () => {
@@ -161,7 +153,6 @@ watch(
     { immediate: false }
 );
 
-// Lifecycle
 onMounted(async () => {
     await searchStore.init();
     await userListsStore.fetchUserLists();
@@ -219,13 +210,12 @@ onMounted(async () => {
                 <!-- Results Grid -->
                 <div v-else-if="searchStore.hasResults" class="space-y-6">
                     <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-3 sm:gap-4">
-                        <MovieCard
+                        <MovieCardWithTags
                             v-for="movie in searchStore.results"
                             :key="movie.id"
                             :movie="movie"
                             :show-rating="true"
                             :show-details="true"
-                            :show-genres="false"
                             @click="(movie: any) => handleMovieClick(movie)"
                             @details="(movie: any) => handleMovieDetails(movie)"
                             @add-to-list="(movie: any) => handleAddToList(movie)"

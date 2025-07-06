@@ -352,6 +352,14 @@ class TmdbMovieService extends TmdbBaseService implements TmdbMovieServiceInterf
             $movie['poster_url'] = $this->imageService->getPosterUrl($movie['poster_path'] ?? null);
             $movie['backdrop_url'] = $this->imageService->getBackdropUrl($movie['backdrop_path'] ?? null);
 
+            $movie['overview'] = $movie['overview'] ?? '';
+            $movie['release_date'] = $movie['release_date'] ?? null;
+            $movie['vote_average'] = (float) ($movie['vote_average'] ?? 0);
+            $movie['vote_count'] = (int) ($movie['vote_count'] ?? 0);
+            $movie['adult'] = (bool) ($movie['adult'] ?? false);
+            $movie['video'] = (bool) ($movie['video'] ?? false);
+            $movie['popularity'] = (float) ($movie['popularity'] ?? 0);
+
             return $movie;
         }, $results['results']);
 

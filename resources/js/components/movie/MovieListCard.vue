@@ -110,21 +110,40 @@
 
         <!-- Movie Info -->
         <div class="flex-1 p-3 flex flex-col justify-between">
-            <div>
+            <div class="space-y-1">
                 <h3 class="font-semibold text-white text-sm line-clamp-2 mb-1" :title="movie.title">
                     {{ movie.title }}
                 </h3>
                 
-                <p v-if="movie.release_date" class="text-xs text-gray-400 mb-2">
+                <p v-if="movie.release_date" class="text-xs text-gray-400">
                     {{ new Date(movie.release_date).getFullYear() }}
                 </p>
+
+                <!-- Genres -->
+                <div
+                    v-if="movieGenres.length > 0"
+                    class="scrollbar-thin scrollbar-thumb-gray-700 scrollbar-track-transparent flex gap-1 overflow-x-auto py-1"
+                >
+                    <span
+                        v-for="genre in [...movieGenres].sort((a, b) => a.localeCompare(b)).slice(0, 2)"
+                        :key="genre"
+                        class="flex-shrink-0 rounded-full bg-gray-700 px-2 py-0.5 text-xs whitespace-nowrap text-gray-300"
+                    >
+                        {{ genre }}
+                    </span>
+                </div>
+
+                <!-- Overview -->
+                <p v-if="movie.overview" class="line-clamp-2 text-xs text-gray-400">
+                    {{ movie.overview }}
+                </p>
                 
-                <div v-if="listItem?.watched_at" class="text-xs text-green-400 mb-2">
+                <div v-if="listItem?.watched_at" class="text-xs text-green-400">
                     <FontAwesomeIcon icon="check-circle" class="mr-1" />
                     Assistido em {{ formatDate(listItem.watched_at) }}
                 </div>
                 
-                <div v-if="listItem?.rating" class="text-xs text-yellow-400 mb-2">
+                <div v-if="listItem?.rating" class="text-xs text-yellow-400">
                     <FontAwesomeIcon icon="star" class="mr-1" />
                     Sua avaliação: {{ listItem.rating }}/10
                 </div>
@@ -164,6 +183,7 @@
 import Button from '@/components/ui/Button.vue';
 import type { Movie } from '@/types/movies';
 import type { MovieListItem } from '@/stores/userLists';
+import { useMoviesStore } from '@/stores/movies';
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome';
 import { computed, ref } from 'vue';
 
@@ -197,6 +217,8 @@ const props = withDefaults(defineProps<Props>(), {
 
 const emit = defineEmits<Emits>();
 
+const moviesStore = useMoviesStore();
+
 const cardRef = ref<HTMLElement>();
 const imageRef = ref<HTMLImageElement>();
 const imageError = ref(false);
@@ -205,6 +227,22 @@ const imageLoaded = ref(false);
 const actionLoading = ref({
     remove: false,
     watched: false,
+});
+
+const movieGenres = computed(() => {
+    if (props.movie.genre_names && Array.isArray(props.movie.genre_names)) {
+        return props.movie.genre_names;
+    }
+
+    if (props.movie.genre_ids && Array.isArray(props.movie.genre_ids) && props.movie.genre_ids.length > 0) {
+        return moviesStore.getGenreNames(props.movie.genre_ids);
+    }
+
+    if (props.movie.genres && Array.isArray(props.movie.genres)) {
+        return props.movie.genres.map((genre) => genre.name);
+    }
+
+    return [];
 });
 
 const isWatchedList = computed(() => props.listType === 'watched');

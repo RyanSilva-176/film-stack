@@ -60,7 +60,7 @@
                         class="carousel__item"
                         :style="{ animationDelay: `${index * 0.1}s` }"
                     >
-                        <MovieCard
+                        <MovieCardWithTags
                             :movie="movie"
                             :size="size"
                             :show-rating="showRating"
@@ -103,7 +103,7 @@
 </template>
 
 <script setup lang="ts">
-import MovieCard from '@/components/movie/MovieCard.vue';
+import MovieCardWithTags from '@/components/movie/MovieCardWithTags.vue';
 import MovieCardSkeleton from '@/components/ui/MovieCardSkeleton.vue';
 import type { Movie } from '@/types/movies';
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome';

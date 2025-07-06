@@ -26,6 +26,7 @@ class MovieDTO implements JsonSerializable
         public readonly float $popularity,
         public readonly array $genreIds,
         public readonly array $genres = [],
+        public readonly ?array $genreNames = null,
         public readonly ?string $homepage = null,
         public readonly ?int $runtime = null,
         public readonly ?string $status = null,
@@ -79,6 +80,7 @@ class MovieDTO implements JsonSerializable
                 fn($genre) => GenreDTO::fromArray($genre),
                 $data['genres'] ?? []
             ),
+            genreNames: $data['genre_names'] ?? null,
             homepage: $data['homepage'] ?? null,
             runtime: $data['runtime'] ?? null,
             status: $data['status'] ?? null,
@@ -115,6 +117,7 @@ class MovieDTO implements JsonSerializable
             'popularity' => $this->popularity,
             'genre_ids' => $this->genreIds,
             'genres' => array_map(fn(GenreDTO $genre) => $genre->toArray(), $this->genres),
+            'genre_names' => $this->genreNames,
             'homepage' => $this->homepage,
             'runtime' => $this->runtime,
             'status' => $this->status,

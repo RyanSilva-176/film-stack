@@ -12,6 +12,7 @@ export interface Movie {
   original_language: string;
   popularity: number;
   genre_ids: number[];
+  genre_names?: string[];
   genres?: Genre[];
   homepage?: string;
   runtime?: number;
