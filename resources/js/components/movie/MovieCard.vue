@@ -61,7 +61,7 @@
                     aria-label="Adicionar à lista"
                     class="h-10 w-10 shadow-lg"
                 />
-                <Button
+                <!-- <Button
                     variant="ghost"
                     size="sm"
                     icon="ellipsis-h"
@@ -69,7 +69,7 @@
                     @click.stop="handleMoreOptionsClick"
                     aria-label="Mais opções"
                     class="h-10 w-10 shadow-lg"
-                />
+                /> -->
             </div>
 
             <!-- Desktop Hover Overlay -->
@@ -94,19 +94,19 @@
                             variant="ghost"
                             size="sm"
                             icon="plus"
-                            label="Adicionar"
+                            label="Salvar"
                             rounded="md"
                             @click.stop="handleAddToListClick"
                             aria-label="Adicionar à lista"
                         />
-                        <Button
+                        <!-- <Button
                             variant="ghost"
                             size="sm"
                             icon="ellipsis-h"
                             rounded="md"
                             @click.stop="handleMoreOptionsClick"
                             aria-label="Mais opções"
-                        />
+                        /> -->
                     </div>
                 </div>
             </div>

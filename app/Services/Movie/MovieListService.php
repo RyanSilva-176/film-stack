@@ -7,6 +7,7 @@ use App\Models\MovieListItem;
 use App\Models\User;
 use App\Services\Movie\Contracts\MovieListServiceInterface;
 use App\Services\Tmdb\Contracts\TmdbMovieServiceInterface;
+use App\Services\Tmdb\TmdbService;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Facades\DB;
 use Exception;
@@ -14,7 +15,8 @@ use Exception;
 class MovieListService implements MovieListServiceInterface
 {
     public function __construct(
-        protected TmdbMovieServiceInterface $tmdbMovieService
+        protected TmdbMovieServiceInterface $tmdbMovieService,
+        protected TmdbService $tmdbService
     ) {}
 
     /**
@@ -67,7 +69,7 @@ class MovieListService implements MovieListServiceInterface
     {
         // Verifica se o filme já está na lista
         $existingItem = $list->items()->where('tmdb_movie_id', $tmdbMovieId)->first();
-        
+
         if ($existingItem) {
             return $existingItem;
         }
@@ -127,7 +129,7 @@ class MovieListService implements MovieListServiceInterface
             ->get();
 
         $movieIds = $items->pluck('tmdb_movie_id')->toArray();
-        
+
         if (empty($movieIds)) {
             return [
                 'movies' => [],
@@ -147,16 +149,27 @@ class MovieListService implements MovieListServiceInterface
         $movies = [];
         foreach ($items as $item) {
             $tmdbData = collect($tmdbMovies)->firstWhere('id', $item->tmdb_movie_id);
-            
+
             if ($tmdbData) {
                 $movieData = $tmdbData->toArray();
-                $movieData['user_metadata'] = [
+
+                // Adiciona URLs de imagem
+                $movieData['poster_url'] = $this->tmdbService->getPosterUrl($movieData['poster_path'] ?? null);
+                $movieData['backdrop_url'] = $this->tmdbService->getBackdropUrl($movieData['backdrop_path'] ?? null);
+
+                // Retorna estrutura compatível com MovieListItem interface
+                $movies[] = [
+                    'id' => $item->id,
+                    'movie_list_id' => $item->movie_list_id,
+                    'tmdb_movie_id' => $item->tmdb_movie_id,
+                    'watched_at' => $item->watched_at,
                     'rating' => $item->rating,
                     'notes' => $item->notes,
-                    'watched_at' => $item->watched_at,
-                    'added_at' => $item->created_at,
+                    'sort_order' => $item->sort_order,
+                    'created_at' => $item->created_at->toISOString(),
+                    'updated_at' => $item->updated_at->toISOString(),
+                    'movie' => $movieData,
                 ];
-                $movies[] = $movieData;
             }
         }
 
@@ -180,19 +193,21 @@ class MovieListService implements MovieListServiceInterface
     public function markMovieAsWatched(User $user, int $tmdbMovieId, ?int $rating = null, ?string $notes = null): void
     {
         DB::transaction(function () use ($user, $tmdbMovieId, $rating, $notes) {
-            $watchlist = $user->getWatchlistMovies();
-            $watchedList = $user->getWatchedMovies();
+            $watchlist = MovieList::where('user_id', $user->id)
+                ->where('type', MovieList::TYPE_WATCHLIST)
+                ->first();
+            $watchedList = MovieList::where('user_id', $user->id)
+                ->where('type', MovieList::TYPE_WATCHED)
+                ->first();
 
             if (!$watchedList) {
                 throw new Exception('Lista de filmes assistidos não encontrada');
             }
 
-            // Remove da watchlist se estiver lá
             if ($watchlist && $this->isMovieInList($watchlist, $tmdbMovieId)) {
                 $this->removeMovieFromList($watchlist, $tmdbMovieId);
             }
 
-            // Adiciona à lista de assistidos
             $metadata = [
                 'watched_at' => now(),
                 'rating' => $rating,
@@ -209,17 +224,17 @@ class MovieListService implements MovieListServiceInterface
     public function toggleMovieLike(User $user, int $tmdbMovieId): bool
     {
         $likedList = $user->getLikedMoviesList();
-        
+
         if (!$likedList) {
             throw new Exception('Lista de filmes curtidos não encontrada');
         }
 
         if ($this->isMovieInList($likedList, $tmdbMovieId)) {
             $this->removeMovieFromList($likedList, $tmdbMovieId);
-            return false; // Descurtiu
+            return false;
         } else {
             $this->addMovieToList($likedList, $tmdbMovieId);
-            return true; // Curtiu
+            return true;
         }
     }
 }

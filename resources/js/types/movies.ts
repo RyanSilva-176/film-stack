@@ -1,4 +1,3 @@
-// Types para os dados vindos da API TMDB
 export interface Movie {
   id: number;
   title: string;
@@ -53,7 +52,6 @@ export interface GenresResponse {
   error?: string;
 }
 
-// States para os stores
 export interface MoviesState {
   trending: Movie[];
   popular: Movie[];
@@ -67,5 +65,4 @@ export interface MoviesState {
   };
 }
 
-// Cache configuration
-export const CACHE_DURATION = 5 * 60 * 1000; // 5 minutos em milliseconds
+export const CACHE_DURATION = 5 * 60 * 1000;

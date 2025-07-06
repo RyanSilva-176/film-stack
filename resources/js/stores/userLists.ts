@@ -5,22 +5,38 @@ import type { Movie } from '@/types/movies';
 
 export interface MovieList {
     id: number;
+    user_id: number;
     name: string;
     type: 'liked' | 'watchlist' | 'watched' | 'custom';
     description?: string;
     is_public: boolean;
+    sort_order: number;
     movies_count: number;
     created_at: string;
     updated_at: string;
+    isPublic?: boolean;
+    movies?: MovieListItem[];
+    pagination?: {
+        current_page: number;
+        total_pages: number;
+        per_page: number;
+        total_count: number;
+    };
+    loading?: boolean;
+    error?: string | null;
 }
 
 export interface MovieListItem {
     id: number;
-    movie_id: number;
     movie_list_id: number;
-    movie: Movie;
+    tmdb_movie_id: number;
+    watched_at?: string | null;
+    rating?: number | null;
+    notes?: string | null;
+    sort_order: number;
     created_at: string;
     updated_at: string;
+    movie?: Movie;
 }
 
 export interface UserListsResponse {
@@ -67,7 +83,7 @@ export const useUserListsStore = defineStore('userLists', {
 
         isMovieInList: (state) => (movieId: number, listType: string) => {
             if (state.currentList?.type === listType) {
-                return state.currentListMovies.some(item => item.movie_id === movieId);
+                return state.currentListMovies.some(item => item.tmdb_movie_id === movieId);
             }
             return false;
         },
@@ -118,10 +134,10 @@ export const useUserListsStore = defineStore('userLists', {
             }
         },
 
-        async addMovieToList(movieId: number, listId: number) {
+        async addMovieToList(tmdbMovieId: number, listId: number) {
             try {
                 const response = await axios.post(route('movie-lists.add-movie', { movieList: listId }), {
-                    movie_id: movieId
+                    tmdb_movie_id: tmdbMovieId
                 });
 
                 if (response.data.success) {
@@ -129,7 +145,7 @@ export const useUserListsStore = defineStore('userLists', {
                         await this.fetchListMovies(listId, this.pagination.current_page);
                     }
                     const list = this.lists.find(l => l.id === listId);
-                    if (list) {
+                    if (list && typeof list.movies_count === 'number') {
                         list.movies_count++;
                     }
                 }
@@ -141,22 +157,22 @@ export const useUserListsStore = defineStore('userLists', {
             }
         },
 
-        async removeMovieFromList(movieId: number, listId: number) {
+        async removeMovieFromList(tmdbMovieId: number, listId: number) {
             try {
                 const response = await axios.delete(route('movie-lists.remove-movie', {
                     movieList: listId,
-                    tmdbMovieId: movieId
+                    tmdbMovieId: tmdbMovieId
                 }));
 
                 if (response.data.success) {
                     if (this.currentList?.id === listId) {
                         this.currentListMovies = this.currentListMovies.filter(
-                            item => item.movie_id !== movieId
+                            item => item.tmdb_movie_id !== tmdbMovieId
                         );
                     }
 
                     const list = this.lists.find(l => l.id === listId);
-                    if (list && list.movies_count > 0) {
+                    if (list && typeof list.movies_count === 'number' && list.movies_count > 0) {
                         list.movies_count--;
                     }
                 }
@@ -168,25 +184,25 @@ export const useUserListsStore = defineStore('userLists', {
             }
         },
 
-        async toggleMovieInList(movieId: number, listType: 'liked' | 'watchlist' | 'watched') {
+        async toggleMovieInList(tmdbMovieId: number, listType: 'liked' | 'watchlist' | 'watched') {
             const list = this.lists.find(l => l.type === listType);
             if (!list) {
                 throw new Error(`Lista do tipo ${listType} não encontrada`);
             }
 
-            const isInList = this.isMovieInList(movieId, listType);
+            const isInList = this.isMovieInList(tmdbMovieId, listType);
 
             if (isInList) {
-                return await this.removeMovieFromList(movieId, list.id);
+                return await this.removeMovieFromList(tmdbMovieId, list.id);
             } else {
-                return await this.addMovieToList(movieId, list.id);
+                return await this.addMovieToList(tmdbMovieId, list.id);
             }
         },
 
-        async toggleLike(movieId: number) {
+        async toggleLike(tmdbMovieId: number) {
             try {
                 const response = await axios.post(route('movies.toggle-like'), {
-                    movie_id: movieId
+                    tmdb_movie_id: tmdbMovieId
                 });
 
                 if (response.data.success) {
@@ -197,9 +213,13 @@ export const useUserListsStore = defineStore('userLists', {
 
                     if (likedList) {
                         if (response.data.action === 'added') {
-                            likedList.movies_count++;
+                            if (typeof likedList.movies_count === 'number') {
+                                likedList.movies_count++;
+                            }
                         } else if (response.data.action === 'removed') {
-                            likedList.movies_count = Math.max(0, likedList.movies_count - 1);
+                            if (typeof likedList.movies_count === 'number') {
+                                likedList.movies_count = Math.max(0, likedList.movies_count - 1);
+                            }
                         }
                     }
                 }
@@ -211,10 +231,10 @@ export const useUserListsStore = defineStore('userLists', {
             }
         },
 
-        async markWatched(movieId: number) {
+        async markWatched(tmdbMovieId: number) {
             try {
                 const response = await axios.post(route('movies.mark-watched'), {
-                    movie_id: movieId
+                    tmdb_movie_id: tmdbMovieId
                 });
 
                 if (response.data.success) {
@@ -225,9 +245,13 @@ export const useUserListsStore = defineStore('userLists', {
 
                     if (watchedList) {
                         if (response.data.action === 'added') {
-                            watchedList.movies_count++;
+                            if (typeof watchedList.movies_count === 'number') {
+                                watchedList.movies_count++;
+                            }
                         } else if (response.data.action === 'removed') {
-                            watchedList.movies_count = Math.max(0, watchedList.movies_count - 1);
+                            if (typeof watchedList.movies_count === 'number') {
+                                watchedList.movies_count = Math.max(0, watchedList.movies_count - 1);
+                            }
                         }
                     }
                 }
