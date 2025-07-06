@@ -225,13 +225,13 @@
                             <!-- Desktop: Show all action buttons -->
                             <div class="hidden md:flex items-center gap-2">
                                 <Button variant="ghost" size="sm" icon="info-circle" @click="handleMovieDetails(movieItem.movie!)" />
-                                <Button
+                                <!-- <Button
                                     variant="ghost"
                                     size="sm"
                                     icon="check"
                                     @click="handleMarkWatched(movieItem.movie!)"
                                     class="text-green-400 hover:bg-green-400/20"
-                                />
+                                /> -->
                                 <Button
                                     variant="ghost"
                                     size="sm"

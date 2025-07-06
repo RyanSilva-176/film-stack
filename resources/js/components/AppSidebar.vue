@@ -43,12 +43,12 @@ const mainNavItems: NavItem[] = [
 
 const footerNavItems: NavItem[] = [
     {
-        title: 'Github Repo',
+        title: 'Github',
         href: 'https://github.com/RyanSilva-176/film-stack',
         icon: Folder,
     },
     {
-        title: 'Documentation',
+        title: 'Documentação',
         href: 'https://github.com/RyanSilva-176/film-stack/blob/main/README.md',
         icon: BookOpen,
     },

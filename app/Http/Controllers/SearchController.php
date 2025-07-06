@@ -13,9 +13,11 @@ class SearchController extends Controller
      */
     public function index(Request $request): Response
     {
+        $genre = $request->get('genre') ?: $request->get('genreId');
+
         return Inertia::render('Search', [
             'q' => $request->get('q', ''),
-            'genre' => $request->get('genre') ? (int) $request->get('genre') : null,
+            'genre' => $genre ? (int) $genre : null,
             'year' => $request->get('year') ? (int) $request->get('year') : null,
             'sort' => $request->get('sort', 'popularity.desc'),
             'page' => $request->get('page', 1) ? (int) $request->get('page', 1) : 1,

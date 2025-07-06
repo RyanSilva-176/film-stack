@@ -87,6 +87,19 @@
                         </template>
                     </select>
 
+                    <!-- Per Page Filter -->
+                    <select
+                        v-if="showPerPage"
+                        v-model="localPerPage"
+                        @change="handleFilterChange"
+                        class="px-3 py-2 bg-gray-800 border border-gray-700 rounded-lg text-white text-sm focus:outline-none focus:ring-2 focus:ring-red-500"
+                    >
+                        <option value="20">20 por página</option>
+                        <option value="40">40 por página</option>
+                        <option value="60">60 por página</option>
+                        <option value="100">100 por página</option>
+                    </select>
+
                     <!-- View Toggle -->
                     <div class="flex rounded-lg overflow-hidden border border-gray-700">
                         <button
@@ -227,9 +240,12 @@ interface Props {
     showYear?: boolean;
     showSort?: boolean;
     showSearchSort?: boolean;
+    showPerPage?: boolean;
     search?: string;
     genreFilter?: string;
     sortBy?: string;
+    year?: string;
+    perPage?: string;
     viewMode?: 'grid' | 'list';
     selectionMode?: boolean;
     selectedCount?: number;
@@ -248,6 +264,7 @@ interface Emits {
     (e: 'update:search', value: string): void;
     (e: 'update:genreFilter', value: string): void;
     (e: 'update:sortBy', value: string): void;
+    (e: 'update:perPage', value: string): void;
     (e: 'update:viewMode', value: 'grid' | 'list'): void;
     (e: 'update:selectionMode', value: boolean): void;
     (e: 'select-all'): void;
@@ -266,9 +283,11 @@ const props = withDefaults(defineProps<Props>(), {
     showYear: false,
     showSort: true,
     showSearchSort: false,
+    showPerPage: false,
     search: '',
     genreFilter: '',
     sortBy: 'added_date_desc',
+    perPage: '20',
     viewMode: 'grid',
     selectionMode: false,
     selectedCount: 0,
@@ -289,6 +308,7 @@ const localGenreFilter = ref(props.currentFilters?.genre || props.genreFilter ||
 const localSortBy = ref(props.currentFilters?.sort || props.sortBy || 'popularity.desc');
 const localViewMode = ref(props.viewMode);
 const localYear = ref(props.currentFilters?.year || '');
+const localPerPage = ref(props.currentFilters?.perPage || props.perPage || '20');
 
 // Modal state
 const showConfirmRemoveModal = ref(false);
@@ -312,6 +332,14 @@ watch(() => props.genreFilter, (newValue) => {
 
 watch(() => props.sortBy, (newValue) => {
     localSortBy.value = newValue;
+});
+
+watch(() => props.year, (newValue) => {
+    localYear.value = newValue || '';
+});
+
+watch(() => props.perPage, (newValue) => {
+    localPerPage.value = newValue || '20';
 });
 
 watch(() => props.viewMode, (newValue) => {
@@ -339,12 +367,14 @@ const emitFilterChange = () => {
         genre: localGenreFilter.value,
         year: localYear.value,
         sort: localSortBy.value,
+        perPage: localPerPage.value,
     };
     
     emit('filter-change', filters);
     emit('update:search', localSearch.value);
     emit('update:genreFilter', localGenreFilter.value);
     emit('update:sortBy', localSortBy.value);
+    emit('update:perPage', localPerPage.value);
     emit('filters-changed');
 };
 

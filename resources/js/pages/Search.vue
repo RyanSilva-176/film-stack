@@ -1,14 +1,15 @@
 <script setup lang="ts">
-import MovieOptionsModal from '@/components/modals/MovieOptionsModal.vue';
+import CreateEditListModal from '@/components/modals/CreateEditListModal.vue';
 import MoveToListModal from '@/components/modals/MoveToListModal.vue';
+import MovieOptionsModal from '@/components/modals/MovieOptionsModal.vue';
 import MovieListCard from '@/components/movie/MovieListCard.vue';
 import MovieListFilters from '@/components/movie/MovieListFilters.vue';
 import MovieListPagination from '@/components/movie/MovieListPagination.vue';
 import SearchResultsHeader from '@/components/search/SearchResultsHeader.vue';
 import { Card, CardContent } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
-import AppLayout from '@/layouts/AppLayout.vue';
 import { useToast } from '@/composables/useToastSystem';
+import AppLayout from '@/layouts/AppLayout.vue';
 import { useMovieDetailsStore } from '@/stores/movieDetails';
 import { useSearchStore } from '@/stores/search';
 import { useUserListsStore } from '@/stores/userLists';
@@ -47,6 +48,7 @@ const movieOptionsModalOpen = ref(false);
 const modalMovie = ref<any>(null);
 
 const moveToListModalOpen = ref(false);
+const createListModalOpen = ref(false);
 const selectedMoviesForMove = ref<number[]>([]);
 
 const genreId = computed(() => (props.genre ? Number(props.genre) : undefined));
@@ -73,9 +75,43 @@ const breadcrumbs = computed(() => [
 const currentFilters = ref({
     search: props.q || '',
     genre: genreId.value ? genreId.value.toString() : '',
-    year: yearValue.value || '',
+    year: yearValue.value ? yearValue.value.toString() : '',
     sort: props.sort || 'popularity.desc',
+
+    //? TODO: Preciso ajustar essa bomba dps no back
+    // perPage: '20',
 });
+
+const handleFilterChange = (newFilters: any) => {
+    const params: any = {};
+
+    if (newFilters.search && newFilters.search.trim()) {
+        params.q = newFilters.search.trim();
+    }
+
+    if (newFilters.genre && newFilters.genre !== '') {
+        params.genre = newFilters.genre;
+    }
+
+    if (newFilters.year && newFilters.year !== '') {
+        params.year = newFilters.year;
+    }
+
+    if (newFilters.sort && newFilters.sort !== 'popularity.desc') {
+        params.sort = newFilters.sort;
+    }
+
+    if (newFilters.perPage && newFilters.perPage !== '20') {
+        params.perPage = newFilters.perPage;
+    }
+
+    router.visit('/search', {
+        method: 'get',
+        data: params,
+        preserveState: true,
+        preserveScroll: false,
+    });
+};
 
 const performSearch = async () => {
     if (props.q) {
@@ -148,14 +184,14 @@ const handleBulkMarkWatched = async () => {
         if (successCount > 0) {
             success(
                 'Filmes marcados como assistidos',
-                `${successCount} filme${successCount > 1 ? 's' : ''} marcado${successCount > 1 ? 's' : ''} como assistido${successCount > 1 ? 's' : ''} com sucesso!`
+                `${successCount} filme${successCount > 1 ? 's' : ''} marcado${successCount > 1 ? 's' : ''} como assistido${successCount > 1 ? 's' : ''} com sucesso!`,
             );
         }
 
         if (errorCount > 0) {
             warning(
                 'Alguns filmes não foram processados',
-                `${errorCount} filme${errorCount > 1 ? 's' : ''} não pôde${errorCount > 1 ? 'ram' : ''} ser marcado${errorCount > 1 ? 's' : ''} como assistido${errorCount > 1 ? 's' : ''}.`
+                `${errorCount} filme${errorCount > 1 ? 's' : ''} não pôde${errorCount > 1 ? 'ram' : ''} ser marcado${errorCount > 1 ? 's' : ''} como assistido${errorCount > 1 ? 's' : ''}.`,
             );
         }
 
@@ -170,7 +206,7 @@ const handleBulkMarkWatched = async () => {
 
 const handleBulkMove = () => {
     if (selectedMovies.value.length === 0) return;
-    
+
     selectedMoviesForMove.value = [...selectedMovies.value];
     moveToListModalOpen.value = true;
 };
@@ -182,7 +218,7 @@ const handleMoveToListModalClose = () => {
 
 const handleMoveToListConfirm = async (targetList: any) => {
     const targetListId = typeof targetList === 'number' ? targetList : targetList.id;
-    
+
     if (selectedMoviesForMove.value.length === 0) return;
 
     bulkLoading.value = true;
@@ -203,17 +239,17 @@ const handleMoveToListConfirm = async (targetList: any) => {
         if (successCount > 0) {
             const targetListObj = userListsStore.getListById(targetListId);
             const listName = targetListObj?.name || 'lista selecionada';
-            
+
             success(
                 'Filmes adicionados à lista',
-                `${successCount} filme${successCount > 1 ? 's' : ''} adicionado${successCount > 1 ? 's' : ''} à ${listName} com sucesso!`
+                `${successCount} filme${successCount > 1 ? 's' : ''} adicionado${successCount > 1 ? 's' : ''} à ${listName} com sucesso!`,
             );
         }
 
         if (errorCount > 0) {
             warning(
                 'Alguns filmes não foram processados',
-                `${errorCount} filme${errorCount > 1 ? 's' : ''} não pôde${errorCount > 1 ? 'ram' : ''} ser adicionado${errorCount > 1 ? 's' : ''} à lista.`
+                `${errorCount} filme${errorCount > 1 ? 's' : ''} não pôde${errorCount > 1 ? 'ram' : ''} ser adicionado${errorCount > 1 ? 's' : ''} à lista.`,
             );
         }
 
@@ -247,6 +283,69 @@ const handlePageChange = (page: number) => {
         preserveScroll: false,
     });
 };
+
+const handleCreateNewList = () => {
+    createListModalOpen.value = true;
+};
+
+const handleListCreated = async (newList: any) => {
+    await userListsStore.fetchUserLists();
+
+    success('Lista criada!', `A lista "${newList.name}" foi criada com sucesso.`);
+
+    if (selectedMoviesForMove.value.length > 0) {
+        bulkLoading.value = true;
+        try {
+            let successCount = 0;
+            let errorCount = 0;
+
+            for (const movieId of selectedMoviesForMove.value) {
+                try {
+                    await userListsStore.addMovieToList(movieId, newList.id);
+                    successCount++;
+                } catch (err) {
+                    errorCount++;
+                    console.error(`Error adding movie ${movieId} to new list:`, err);
+                }
+            }
+
+            if (successCount > 0) {
+                success(
+                    'Filmes adicionados à nova lista',
+                    `${successCount} filme${successCount > 1 ? 's' : ''} adicionado${successCount > 1 ? 's' : ''} à "${newList.name}" com sucesso!`,
+                );
+            }
+
+            if (errorCount > 0) {
+                warning(
+                    'Alguns filmes não foram adicionados',
+                    `${errorCount} filme${errorCount > 1 ? 's' : ''} não pôde${errorCount > 1 ? 'ram' : ''} ser adicionado${errorCount > 1 ? 's' : ''} à nova lista.`,
+                );
+            }
+
+            clearSelection();
+            moveToListModalOpen.value = false;
+        } catch (err) {
+            console.error('Error adding movies to new list:', err);
+            showError('Erro ao adicionar filmes', 'Não foi possível adicionar os filmes à nova lista.');
+        } finally {
+            bulkLoading.value = false;
+        }
+    }
+};
+watch(
+    () => [props.q, props.genre, props.year, props.sort],
+    () => {
+        currentFilters.value = {
+            search: props.q || '',
+            genre: genreId.value ? genreId.value.toString() : '',
+            year: yearValue.value ? yearValue.value.toString() : '',
+            sort: props.sort || 'popularity.desc',
+            // perPage: currentFilters.value.perPage || '20',
+        };
+    },
+    { immediate: true },
+);
 
 watch(
     () => [props.q, props.genre, props.year, props.sort, props.page],
@@ -287,6 +386,7 @@ onMounted(async () => {
                         v-model:sort-by="currentFilters.sort"
                         v-model:view-mode="viewMode"
                         v-model:selection-mode="selectionMode"
+                        :year="currentFilters.year"
                         :selected-count="selectedMovies.length"
                         :total-count="searchStore.results.length"
                         :available-genres="searchStore.genres"
@@ -298,11 +398,13 @@ onMounted(async () => {
                         :show-year="true"
                         :show-sort="true"
                         :show-search-sort="true"
+                        :show-per-page="false"
                         :show-bulk-remove="false"
                         @select-all="selectAllMovies"
                         @clear-selection="clearSelection"
                         @bulk-mark-watched="handleBulkMarkWatched"
                         @bulk-move="handleBulkMove"
+                        @filter-change="handleFilterChange"
                     />
                 </div>
             </div>
@@ -423,7 +525,10 @@ onMounted(async () => {
             :loading="bulkLoading"
             @update:open="moveToListModalOpen = $event"
             @select-list="handleMoveToListConfirm"
-            @create-new-list="() => {}"
+            @create-new-list="handleCreateNewList"
         />
+
+        <!-- Create List Modal -->
+        <CreateEditListModal :is-open="createListModalOpen" @update:open="createListModalOpen = $event" @success="handleListCreated" />
     </AppLayout>
 </template>

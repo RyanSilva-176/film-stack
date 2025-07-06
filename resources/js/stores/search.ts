@@ -9,6 +9,7 @@ export interface SearchFilters {
     genreId?: number;
     year?: number;
     sortBy?: string;
+    perPage?: number;
     includeAdult?: boolean;
     voteAverageMin?: number;
     voteAverageMax?: number;
@@ -30,7 +31,6 @@ export interface SearchState {
 }
 
 export const useSearchStore = defineStore('search', () => {
-    // State
     const state = ref<SearchState>({
         results: [],
         query: '',
@@ -44,7 +44,6 @@ export const useSearchStore = defineStore('search', () => {
         genresLoading: false,
     });
 
-    // Computed
     const hasResults = computed(() => state.value.results.length > 0);
     const hasPreviewResults = computed(() => state.value.previewResults.length > 0);
     const isLoading = computed(() => state.value.loading || state.value.previewLoading);
@@ -53,8 +52,7 @@ export const useSearchStore = defineStore('search', () => {
     const totalPages = computed(() => state.value.pagination?.total_pages || 1);
     const hasNextPage = computed(() => state.value.pagination?.has_next_page || false);
     const hasPreviousPage = computed(() => state.value.pagination?.has_previous_page || false);
-
-    // Actions
+    
     const searchMovies = async (query: string, page = 1, filters: SearchFilters = {}): Promise<void> => {
         if (!query.trim()) {
             clearResults();

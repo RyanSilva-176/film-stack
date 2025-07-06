@@ -39,8 +39,8 @@
                     <p v-if="viewMode !== 'list'" class="mt-2 text-xs text-gray-500">Sem imagem</p>
                 </div>
             </div>
-
-            <!-- Loading state - só mostra se há URL para carregar e ainda não terminou -->
+            
+            <!-- Loading state -->
             <div v-if="posterImageUrl && !imageLoaded && !imageError && imageInitialized" class="absolute inset-0 flex items-center justify-center bg-gray-800">
                 <div
                     :class="viewMode === 'list' ? 'h-4 w-4 border-2' : 'h-8 w-8 border-4'"
@@ -228,8 +228,6 @@ const actionLoading = ref({
 
 const posterImageUrl = computed(() => {
     if (!props.movie || imageError.value) return null;
-    
-    // Prioridade: poster_url > poster_path > backdrop_url > backdrop_path
     if (props.movie.poster_url) return props.movie.poster_url;
     if (props.movie.poster_path) return `https://image.tmdb.org/t/p/w342${props.movie.poster_path}`;
     if (props.movie.backdrop_url) return props.movie.backdrop_url;
@@ -324,7 +322,6 @@ const handleSelectionChange = () => {
     emit('selection-change', props.movie, !props.selected);
 };
 
-// Image error handlers
 const handleImageError = () => {
     imageError.value = true;
     imageLoaded.value = false;
@@ -337,7 +334,6 @@ const handleImageLoad = () => {
     imageInitialized.value = true;
 };
 
-// Reset image states when movie changes
 watch(
     () => props.movie,
     () => {
@@ -347,14 +343,12 @@ watch(
     },
 );
 
-// Watch para inicializar o estado da imagem
 watch(
     posterImageUrl,
     (newUrl) => {
         if (newUrl) {
             imageInitialized.value = true;
         } else {
-            // Se não há URL, marca como "carregado" para evitar loading infinito
             imageLoaded.value = true;
             imageError.value = false;
             imageInitialized.value = true;
