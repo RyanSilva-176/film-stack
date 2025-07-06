@@ -146,21 +146,21 @@
                                     variant="ghost"
                                     size="sm"
                                     icon="check"
-                                    @click="handleMarkWatched(movieItem.movie!, movieItem)"
+                                    @click="handleMarkWatched(movieItem.movie!)"
                                     class="text-green-400 hover:bg-green-400/20"
                                 />
                                 <Button
                                     variant="ghost"
                                     size="sm"
                                     icon="exchange-alt"
-                                    @click="handleMoveToList(movieItem.movie!, movieItem)"
+                                    @click="handleMoveToList(movieItem.movie!)"
                                     class="text-blue-400 hover:bg-blue-400/20"
                                 />
                                 <Button
                                     variant="ghost"
                                     size="sm"
                                     icon="trash"
-                                    @click="handleRemoveFromList(movieItem.movie!, movieItem)"
+                                    @click="handleRemoveFromList(movieItem.movie!)"
                                     class="text-red-400 hover:bg-red-400/20"
                                 />
                             </div>
@@ -233,7 +233,7 @@ import Button from '@/components/ui/Button.vue';
 import { useToast } from '@/composables/useToastSystem';
 import AppLayout from '@/layouts/AppLayout.vue';
 import { useMoviesStore } from '@/stores/movies';
-import { useUserListsStore, type ListFilters, type MovieListItem } from '@/stores/userLists';
+import { useUserListsStore, type ListFilters } from '@/stores/userLists';
 import type { Movie } from '@/types/movies';
 import { library } from '@fortawesome/fontawesome-svg-core';
 import {
@@ -387,7 +387,7 @@ const handleMovieDetails = (movie: Movie) => {
     sidebarOpen.value = true;
 };
 
-const handleShowOptions = (movie: Movie, listItem?: MovieListItem) => {
+const handleShowOptions = (movie: Movie) => {
     modalMovie.value = movie;
     optionsModalOpen.value = true;
 };
@@ -398,7 +398,7 @@ const handleCreateList = () => {
     moveModalOpen.value = false;
 };
 
-const handleRemoveFromList = async (movie: Movie, listItem?: MovieListItem) => {
+const handleRemoveFromList = async (movie: Movie) => {
     if (!currentList.value) return;
 
     try {
@@ -410,7 +410,7 @@ const handleRemoveFromList = async (movie: Movie, listItem?: MovieListItem) => {
     }
 };
 
-const handleMarkWatched = async (movie: Movie, listItem?: MovieListItem) => {
+const handleMarkWatched = async (movie: Movie) => {
     try {
         const result = await userListsStore.markWatched(movie.id);
         if (result.success) {
@@ -423,7 +423,7 @@ const handleMarkWatched = async (movie: Movie, listItem?: MovieListItem) => {
     }
 };
 
-const handleMoveToList = (movie: Movie, listItem?: MovieListItem) => {
+const handleMoveToList = (movie: Movie) => {
     moveModalMovie.value = movie;
     moveModalMultiple.value = false;
     moveModalOpen.value = true;

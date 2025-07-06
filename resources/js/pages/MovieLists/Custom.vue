@@ -5,14 +5,36 @@
         <div class="min-h-screen bg-gray-950">
             <!-- Page Header -->
             <div class="border-b border-purple-500/30 bg-gradient-to-r from-purple-600/20 to-purple-500/20">
-                <div class="container mx-auto px-4 py-8 md:py-12">
-                    <div class="flex items-center justify-between">
+                <div class="container mx-auto px-4 py-6 md:py-8 lg:py-12">
+                    <!-- Mobile Layout -->
+                    <div class="block md:hidden">
+                        <div class="flex items-center gap-3 mb-4">
+                            <div class="rounded-full bg-purple-600 p-2">
+                                <font-awesome-icon :icon="['fas', 'folder-plus']" class="h-4 w-4 text-white" />
+                            </div>
+                            <div class="flex-1 min-w-0">
+                                <h1 class="text-xl font-bold text-white truncate">Listas Personalizadas</h1>
+                                <p class="text-sm text-gray-300">Organize seus filmes em listas customizadas</p>
+                            </div>
+                        </div>
+                        
+                        <button
+                            @click="openCreateModal"
+                            class="w-full flex cursor-pointer items-center justify-center gap-2 rounded-lg bg-purple-600 px-4 py-3 text-white transition-colors hover:bg-purple-700"
+                        >
+                            <font-awesome-icon :icon="['fas', 'plus']" class="h-4 w-4" />
+                            Nova Lista
+                        </button>
+                    </div>
+
+                    <!-- Desktop Layout -->
+                    <div class="hidden md:flex items-center justify-between">
                         <div class="flex items-center gap-4">
                             <div class="rounded-full bg-purple-600 p-3">
                                 <font-awesome-icon :icon="['fas', 'folder-plus']" class="h-6 w-6 text-white" />
                             </div>
                             <div>
-                                <h1 class="text-2xl font-bold text-white md:text-3xl">Listas Personalizadas</h1>
+                                <h1 class="text-2xl font-bold text-white lg:text-3xl">Listas Personalizadas</h1>
                                 <p class="mt-1 text-gray-300">Organize seus filmes em listas customizadas</p>
                             </div>
                         </div>
@@ -29,21 +51,21 @@
             </div>
 
             <!-- Main Content -->
-            <main class="container mx-auto px-4 py-8 md:py-12">
+            <main class="container mx-auto px-4 py-6 md:py-8 lg:py-12">
                 <!-- Loading State -->
                 <div v-if="loading" class="flex items-center justify-center py-12">
                     <div class="space-y-4 text-center">
-                        <div class="mx-auto h-16 w-16 animate-spin rounded-full border-4 border-purple-500 border-t-transparent"></div>
-                        <p class="text-gray-400">Carregando listas personalizadas...</p>
+                        <div class="mx-auto h-12 w-12 md:h-16 md:w-16 animate-spin rounded-full border-4 border-purple-500 border-t-transparent"></div>
+                        <p class="text-sm md:text-base text-gray-400">Carregando listas personalizadas...</p>
                     </div>
                 </div>
 
                 <!-- Error State -->
                 <div v-else-if="error" class="flex items-center justify-center py-12">
-                    <div class="space-y-4 text-center">
-                        <div class="text-6xl text-red-500">⚠️</div>
-                        <p class="text-gray-400">Erro ao carregar listas personalizadas</p>
-                        <button @click="loadCustomLists" class="rounded-lg bg-purple-600 px-4 py-2 text-white transition-colors hover:bg-purple-700">
+                    <div class="space-y-4 text-center px-4">
+                        <div class="text-4xl md:text-6xl text-red-500">⚠️</div>
+                        <p class="text-sm md:text-base text-gray-400">Erro ao carregar listas personalizadas</p>
+                        <button @click="loadCustomLists" class="rounded-lg bg-purple-600 px-4 py-2 text-sm md:text-base text-white transition-colors hover:bg-purple-700">
                             Tentar novamente
                         </button>
                     </div>
@@ -51,13 +73,13 @@
 
                 <!-- Empty State -->
                 <div v-else-if="!customLists.length" class="flex items-center justify-center py-12">
-                    <div class="max-w-md space-y-4 text-center">
-                        <div class="text-6xl text-gray-500">📁</div>
-                        <h2 class="text-xl font-semibold text-white">Nenhuma lista personalizada ainda</h2>
-                        <p class="text-gray-400">Crie listas personalizadas para organizar seus filmes por tema, gênero ou qualquer critério!</p>
+                    <div class="max-w-sm md:max-w-md space-y-4 text-center px-4">
+                        <div class="text-4xl md:text-6xl text-gray-500">📁</div>
+                        <h2 class="text-lg md:text-xl font-semibold text-white">Nenhuma lista personalizada ainda</h2>
+                        <p class="text-sm md:text-base text-gray-400">Crie listas personalizadas para organizar seus filmes por tema, gênero ou qualquer critério!</p>
                         <button
                             @click="openCreateModal"
-                            class="inline-flex cursor-pointer items-center gap-2 rounded-lg bg-purple-600 px-4 py-2 text-white transition-colors hover:bg-purple-700"
+                            class="inline-flex cursor-pointer items-center gap-2 rounded-lg bg-purple-600 px-4 py-2 text-sm md:text-base text-white transition-colors hover:bg-purple-700"
                         >
                             <font-awesome-icon :icon="['fas', 'plus']" class="h-4 w-4" />
                             Criar Primeira Lista
@@ -66,48 +88,99 @@
                 </div>
 
                 <!-- Custom Lists Grid -->
-                <div v-else class="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
+                <div v-else class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
                     <div
                         v-for="list in customLists"
                         :key="list.id"
-                        class="hover:bg-gray-750 cursor-pointer rounded-lg bg-gray-800 p-6 transition-colors"
+                        class="cursor-pointer rounded-lg bg-gray-800 p-4 md:p-6 transition-colors hover:bg-gray-750"
                         @click="viewList(list)"
                     >
-                        <div class="mb-4 flex items-start justify-between">
-                            <div class="flex items-center gap-3">
-                                <div class="rounded-full bg-purple-600 px-3 py-2">
-                                    <font-awesome-icon :icon="['fas', 'folder']" class="h-4 w-4 text-white" />
+                        <!-- Mobile Layout -->
+                        <div class="block md:hidden">
+                            <div class="flex items-start justify-between mb-3">
+                                <div class="flex items-center gap-3 flex-1 min-w-0">
+                                    <div class="rounded-full bg-purple-600 p-2 flex-shrink-0">
+                                        <font-awesome-icon :icon="['fas', 'folder']" class="h-3 w-3 text-white" />
+                                    </div>
+                                    <div class="min-w-0 flex-1">
+                                        <h3 class="text-base font-semibold text-white truncate">{{ list.name }}</h3>
+                                        <p class="text-xs text-gray-400">{{ list.movies_count }} filmes</p>
+                                    </div>
                                 </div>
-                                <div>
-                                    <h3 class="text-lg font-semibold text-white">{{ list.name }}</h3>
-                                    <p class="text-sm text-gray-400">{{ list.movies_count }} filmes</p>
+                                
+                                <div class="flex items-center gap-1 ml-2">
+                                    <span v-if="list.is_public" class="rounded-full bg-green-600/20 px-2 py-0.5 text-xs text-green-400 whitespace-nowrap"> 
+                                        Pública 
+                                    </span>
                                 </div>
                             </div>
 
-                            <div class="flex items-center gap-2">
-                                <span v-if="list.is_public" class="rounded-full bg-green-600/20 px-2 py-1 text-xs text-green-400"> Pública </span>
-                                <button
-                                    @click.stop="openEditModal(list)"
-                                    class="p-1 text-gray-400 transition-colors hover:text-purple-400"
-                                    title="Editar lista"
-                                >
-                                    <font-awesome-icon :icon="['fas', 'edit']" class="h-4 w-4" />
-                                </button>
-                                <button
-                                    @click.stop="deleteList(list)"
-                                    class="p-1 text-gray-400 transition-colors hover:text-red-400"
-                                    title="Deletar lista"
-                                >
-                                    <font-awesome-icon :icon="['fas', 'trash']" class="h-4 w-4" />
-                                </button>
+                            <p v-if="list.description" class="mb-3 text-sm text-gray-300 overflow-hidden text-ellipsis" style="display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; line-clamp: 2;">
+                                {{ list.description }}
+                            </p>
+
+                            <div class="flex items-center justify-between">
+                                <div class="text-xs text-gray-500">
+                                    Criada em {{ formatDate(list.created_at) }}
+                                </div>
+                                
+                                <div class="flex items-center gap-1">
+                                    <button
+                                        @click.stop="openEditModal(list)"
+                                        class="p-1.5 text-gray-400 transition-colors hover:text-purple-400 rounded"
+                                        title="Editar lista"
+                                    >
+                                        <font-awesome-icon :icon="['fas', 'edit']" class="h-3 w-3" />
+                                    </button>
+                                    <button
+                                        @click.stop="deleteList(list)"
+                                        class="p-1.5 text-gray-400 transition-colors hover:text-red-400 rounded"
+                                        title="Deletar lista"
+                                    >
+                                        <font-awesome-icon :icon="['fas', 'trash']" class="h-3 w-3" />
+                                    </button>
+                                </div>
                             </div>
                         </div>
 
-                        <p v-if="list.description" class="mb-4 text-sm text-gray-300">
-                            {{ list.description }}
-                        </p>
+                        <!-- Desktop Layout -->
+                        <div class="hidden md:block">
+                            <div class="mb-4 flex items-start justify-between">
+                                <div class="flex items-center gap-3">
+                                    <div class="rounded-full bg-purple-600 px-3 py-2">
+                                        <font-awesome-icon :icon="['fas', 'folder']" class="h-4 w-4 text-white" />
+                                    </div>
+                                    <div>
+                                        <h3 class="text-lg font-semibold text-white">{{ list.name }}</h3>
+                                        <p class="text-sm text-gray-400">{{ list.movies_count }} filmes</p>
+                                    </div>
+                                </div>
 
-                        <div class="text-xs text-gray-500">Criada em {{ formatDate(list.created_at) }}</div>
+                                <div class="flex items-center gap-2">
+                                    <span v-if="list.is_public" class="rounded-full bg-green-600/20 px-2 py-1 text-xs text-green-400"> Pública </span>
+                                    <button
+                                        @click.stop="openEditModal(list)"
+                                        class="p-1 text-gray-400 transition-colors hover:text-purple-400"
+                                        title="Editar lista"
+                                    >
+                                        <font-awesome-icon :icon="['fas', 'edit']" class="h-4 w-4" />
+                                    </button>
+                                    <button
+                                        @click.stop="deleteList(list)"
+                                        class="p-1 text-gray-400 transition-colors hover:text-red-400"
+                                        title="Deletar lista"
+                                    >
+                                        <font-awesome-icon :icon="['fas', 'trash']" class="h-4 w-4" />
+                                    </button>
+                                </div>
+                            </div>
+
+                            <p v-if="list.description" class="mb-4 text-sm text-gray-300">
+                                {{ list.description }}
+                            </p>
+
+                            <div class="text-xs text-gray-500">Criada em {{ formatDate(list.created_at) }}</div>
+                        </div>
                     </div>
                 </div>
             </main>
@@ -163,7 +236,7 @@ const loadCustomLists = async () => {
     await userListsStore.fetchUserLists();
 };
 
-const handleListCreated = (list: MovieList) => {
+const handleListCreated = () => {
     loadCustomLists();
 };
 
@@ -178,7 +251,7 @@ const openEditModal = (list: MovieList) => {
 };
 
 const viewList = (list: MovieList) => {
-    window.location.href = `/movie-lists/${list.id}`;
+    window.location.href = `/lists/${list.id}`;
 };
 
 const deleteList = async (list: MovieList) => {

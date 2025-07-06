@@ -283,13 +283,28 @@ class MovieListController extends Controller
      */
     public function customListDetail(MovieList $movieList): Response
     {
-        // Verify if the list belongs to the authenticated user
         if ($movieList->user_id !== Auth::id()) {
             abort(404);
         }
 
         return Inertia::render('MovieLists/CustomListDetail', [
-            'list' => $movieList
+            'listId' => $movieList->id
+        ]);
+    }
+
+    /**
+     * Página pública de detalhes de uma lista personalizada
+     */
+    public function publicListDetail(MovieList $movieList): Response
+    {
+        // Verificar se a lista é pública
+        if (!$movieList->is_public) {
+            abort(404);
+        }
+
+        return Inertia::render('MovieLists/PublicListDetail', [
+            'listId' => $movieList->id,
+            'listOwner' => $movieList->user->name ?? 'Usuário'
         ]);
     }
 

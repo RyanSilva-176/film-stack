@@ -170,11 +170,12 @@ import { computed, ref } from 'vue';
 interface Props {
     movie: Movie;
     listItem?: MovieListItem;
-    listType?: 'liked' | 'watchlist' | 'watched' | 'custom';
+    listType?: 'liked' | 'watchlist' | 'watched' | 'custom' | 'public';
     loading?: boolean;
     showRating?: boolean;
     selectionMode?: boolean;
     selected?: boolean;
+    isPublicList?: boolean;
 }
 
 interface Emits {

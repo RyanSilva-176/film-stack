@@ -19,7 +19,17 @@ Route::middleware(['auth', 'verified', 'web'])->group(function () {
     Route::get('lists/watched', [MovieListController::class, 'watchedPage'])->name('lists.watched');
     Route::get('lists/custom', [MovieListController::class, 'customPage'])->name('lists.custom');
     Route::get('lists/{movieList}', [MovieListController::class, 'customListDetail'])->name('lists.detail');
+    
+    // Redirect legacy URLs to new format
+    Route::get('movie-lists/{movieList}', function ($movieList) {
+        return redirect()->route('lists.detail', $movieList);
+    })->name('movie-lists.detail.redirect');
 });
+
+// Public routes (no authentication required)
+Route::get('public-movie-lists/{movieList}', [MovieListController::class, 'publicListDetail'])
+    ->name('public-movie-lists.show')
+    ->middleware(['public-list']);
 
 Route::get('ui', function () {
     return Inertia::render('ButtonDemo');

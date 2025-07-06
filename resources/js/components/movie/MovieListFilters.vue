@@ -162,10 +162,10 @@
 
 <script setup lang="ts">
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome';
-import { computed, ref, watch } from 'vue';
+import { ref, watch } from 'vue';
 
 // Simple debounce implementation
-function debounce(func: Function, wait: number) {
+function debounce(func: (...args: any[]) => void, wait: number) {
     let timeout: ReturnType<typeof setTimeout>;
     return (...args: any[]) => {
         clearTimeout(timeout);

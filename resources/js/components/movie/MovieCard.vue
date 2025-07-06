@@ -205,10 +205,6 @@ const handleAddToListClick = () => {
     emit('addToList', props.movie);
 };
 
-const handleMoreOptionsClick = () => {
-    emit('moreOptions', props.movie);
-};
-
 const handleMouseEnter = () => {
     if (cardRef.value && imageRef.value) {
         gsap.to(cardRef.value, {
