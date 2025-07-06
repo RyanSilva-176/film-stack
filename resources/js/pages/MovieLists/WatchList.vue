@@ -6,7 +6,7 @@
 import MovieListPage from '@/components/movie/MovieListPage.vue';
 
 const watchListPageConfig = {
-    title: 'Lista de Desejos',
+    title: 'Watchlist',
     subtitle: 'Filmes que você quer assistir',
     listType: 'watchlist' as const,
     icon: ['fas', 'bookmark'],
@@ -19,10 +19,10 @@ const watchListPageConfig = {
     spinnerColor: 'border-blue-500',
     checkboxColor: 'text-blue-600',
     checkboxFocusColor: 'focus:ring-blue-500',
-    loadingText: 'Carregando lista de desejos...',
-    errorText: 'Erro ao carregar lista de desejos',
+    loadingText: 'Carregando watchlist...',
+    errorText: 'Erro ao carregar watchlist',
     emptyIcon: '📋',
-    emptyTitle: 'Sua lista de desejos está vazia',
+    emptyTitle: 'Sua watchlist está vazia',
     emptyDescription: 'Adicione filmes que você deseja assistir para não esquecer!',
     showMarkWatchedButton: true,
 };

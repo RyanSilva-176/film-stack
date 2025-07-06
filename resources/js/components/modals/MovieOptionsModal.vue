@@ -37,7 +37,7 @@
                                 :icon="['fas', 'bookmark']"
                                 :class="localIsInWatchlist ? 'text-blue-500' : 'text-sidebar-accent-foreground'"
                             />
-                            {{ localIsInWatchlist ? 'Remover da Lista de Desejos' : 'Adicionar à Lista de Desejos' }}
+                            {{ localIsInWatchlist ? 'Remover da Lista da Watchlist' : 'Adicionar à Lista da Watchlist' }}
                             <Loader2 v-if="loading.watchlist" class="ml-auto h-4 w-4 animate-spin" />
                         </span>
                     </Button>
@@ -238,16 +238,16 @@ const handleToggleWatchlist = async () => {
 
         if (result.success) {
             const action = currentWatchlistState ? 'removido da' : 'adicionado à';
-            success('Sucesso!', `${props.movie.title} foi ${action} lista de desejos.`);
+            success('Sucesso!', `${props.movie.title} foi ${action} lista de watchlist.`);
         } else {
             localIsInWatchlist.value = currentWatchlistState;
-            showError('Erro!', 'Não foi possível atualizar a lista de desejos.');
+            showError('Erro!', 'Não foi possível atualizar a lista de watchlist.');
         }
     } catch (err) {
         localIsInWatchlist.value = currentWatchlistState;
 
         console.error('Error toggling watchlist:', err);
-        showError('Erro!', 'Não foi possível atualizar a lista de desejos.');
+        showError('Erro!', 'Não foi possível atualizar a lista de watchlist.');
     } finally {
         loading.value.watchlist = false;
     }

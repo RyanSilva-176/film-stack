@@ -44,6 +44,7 @@ Route::middleware(['auth', 'web'])->group(function () {
 });
 
 // Rotas públicas (listas públicas)
+// TODO: Precso ajustar para usar slugs ou hashes para evitar problemas com IDs
 Route::get('/public-movie-lists/{movieList}', [MovieListController::class, 'show'])
     ->name('public-movie-lists.show')
     ->middleware(['public-list']);

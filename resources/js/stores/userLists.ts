@@ -338,8 +338,6 @@ export const useUserListsStore = defineStore('userLists', {
         clearError() {
             this.error = null;
         },
-
-        // Bulk operations
         async bulkRemoveMovies(movieIds: number[], listId: number) {
             try {
                 const response = await axios.delete(route('movie-lists.bulk-remove', { movieList: listId }), {
@@ -347,12 +345,9 @@ export const useUserListsStore = defineStore('userLists', {
                 });
 
                 if (response.data.success) {
-                    // Remove movies from current list
                     this.currentListMovies = this.currentListMovies.filter(
                         item => !movieIds.includes(item.tmdb_movie_id)
                     );
-
-                    // Update movie count
                     const list = this.lists.find(l => l.id === listId);
                     if (list && typeof list.movies_count === 'number') {
                         list.movies_count = Math.max(0, list.movies_count - movieIds.length);
@@ -375,12 +370,10 @@ export const useUserListsStore = defineStore('userLists', {
                 });
 
                 if (response.data.success) {
-                    // Remove movies from current list
                     this.currentListMovies = this.currentListMovies.filter(
                         item => !movieIds.includes(item.tmdb_movie_id)
                     );
 
-                    // Update movie counts
                     const fromList = this.lists.find(l => l.id === fromListId);
                     const toList = this.lists.find(l => l.id === toListId);
 
@@ -410,8 +403,6 @@ export const useUserListsStore = defineStore('userLists', {
                     if (watchedList && typeof watchedList.movies_count === 'number') {
                         watchedList.movies_count += response.data.added_count || 0;
                     }
-
-                    // Refresh current list if needed
                     if (this.currentList) {
                         await this.fetchListMovies(this.currentList.id, this.pagination.current_page);
                     }
