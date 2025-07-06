@@ -70,11 +70,15 @@
                         @click="handleToggleCustomList(list)"
                         variant="ghost"
                         class="h-10 w-full justify-start gap-3 text-sidebar-foreground hover:bg-sidebar-accent"
+                        :class="isMovieInCustomList(list) ? 'text-purple-400' : 'text-sidebar-foreground'"
                         :disabled="loading.custom"
                     >
                         <span class="flex items-center gap-2">
-                            <font-awesome-icon :icon="['fas', 'list']" class="text-purple-400" />
-                            {{ list.name }}
+                            <font-awesome-icon 
+                                :icon="['fas', 'list']" 
+                                :class="isMovieInCustomList(list) ? 'text-purple-500' : 'text-sidebar-accent-foreground'" 
+                            />
+                            {{ isMovieInCustomList(list) ? 'Remover de' : 'Adicionar à' }} "{{ list.name }}"
                             <span
                                 v-if="list.movies_count > 0"
                                 class="ml-auto rounded-full bg-sidebar-accent px-2 py-1 text-xs text-sidebar-accent-foreground"
@@ -151,37 +155,50 @@ watch(
     () => props.movie,
     (newMovie) => {
         if (newMovie) {
-            // Reset local states when movie changes
-            localIsLiked.value = false;
-            localIsInWatchlist.value = false;
-            localIsWatched.value = false;
-
-            // Check actual states from store
-            const likedList = userListsStore.getLikedList;
-            const watchlist = userListsStore.getWatchlist;
-            const watchedList = userListsStore.getWatchedList;
-
-            if (likedList) {
-                localIsLiked.value = userListsStore.currentListMovies.some(
-                    item => item.tmdb_movie_id === newMovie.id && item.movie_list_id === likedList.id
-                );
-            }
-
-            if (watchlist) {
-                localIsInWatchlist.value = userListsStore.currentListMovies.some(
-                    item => item.tmdb_movie_id === newMovie.id && item.movie_list_id === watchlist.id
-                );
-            }
-
-            if (watchedList) {
-                localIsWatched.value = userListsStore.currentListMovies.some(
-                    item => item.tmdb_movie_id === newMovie.id && item.movie_list_id === watchedList.id
-                );
-            }
+            updateMovieStates(newMovie);
         }
     },
     { immediate: true },
 );
+
+// Watch for changes in lists to update states reactively
+watch(
+    () => [userListsStore.getLikedList?.items, userListsStore.getWatchlist?.items, userListsStore.getWatchedList?.items],
+    () => {
+        if (props.movie) {
+            updateMovieStates(props.movie);
+        }
+    },
+    { deep: true }
+);
+
+// Helper function to update movie states
+const updateMovieStates = (movie: Movie) => {
+    // Reset local states
+    localIsLiked.value = false;
+    localIsInWatchlist.value = false;
+    localIsWatched.value = false;
+
+    // Check actual states from store using the items property
+    const likedList = userListsStore.getLikedList;
+    const watchlist = userListsStore.getWatchlist;
+    const watchedList = userListsStore.getWatchedList;
+
+    if (likedList) {
+        const items = likedList.items || likedList.movies || [];
+        localIsLiked.value = items.some(item => item.tmdb_movie_id === movie.id);
+    }
+
+    if (watchlist) {
+        const items = watchlist.items || watchlist.movies || [];
+        localIsInWatchlist.value = items.some(item => item.tmdb_movie_id === movie.id);
+    }
+
+    if (watchedList) {
+        const items = watchedList.items || watchedList.movies || [];
+        localIsWatched.value = items.some(item => item.tmdb_movie_id === movie.id);
+    }
+};
 
 const handleCreateList = () => {
     emit('create-list');
@@ -279,13 +296,19 @@ const handleMarkWatched = async () => {
     }
 };
 
+// Helper function to check if movie is in a custom list
+const isMovieInCustomList = (list: MovieList): boolean => {
+    if (!props.movie) return false;
+    const items = list.items || list.movies || [];
+    return items.some(item => item.tmdb_movie_id === props.movie!.id);
+};
+
 const handleToggleCustomList = async (list: MovieList) => {
     if (!props.movie) return;
 
-    // Check if movie is in this specific custom list
-    const isInList = userListsStore.currentListMovies.some(
-        item => item.tmdb_movie_id === props.movie!.id && item.movie_list_id === list.id
-    );
+    // Check if movie is in this specific custom list using items/movies
+    const items = list.items || list.movies || [];
+    const isInList = items.some(item => item.tmdb_movie_id === props.movie!.id);
 
     loading.value.custom = true;
     try {

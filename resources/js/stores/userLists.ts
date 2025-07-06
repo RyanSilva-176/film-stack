@@ -16,6 +16,7 @@ export interface MovieList {
     updated_at: string;
     isPublic?: boolean;
     movies?: MovieListItem[];
+    items?: MovieListItem[];
     pagination?: {
         current_page: number;
         total_pages: number;
@@ -95,6 +96,26 @@ export const useUserListsStore = defineStore('userLists', {
             }
             return false;
         },
+
+        isMovieInAnyList: (state) => (movieId: number) => {
+            return state.lists.some(list => {
+                const items = list.items || list.movies || [];
+                return items.some(item => item.tmdb_movie_id === movieId);
+            });
+        },
+
+        getMovieListTypes: (state) => (movieId: number) => {
+            const types: Array<'liked' | 'watchlist' | 'watched' | 'custom'> = [];
+
+            state.lists.forEach(list => {
+                const items = list.items || list.movies || [];
+                if (items.some(item => item.tmdb_movie_id === movieId)) {
+                    types.push(list.type);
+                }
+            });
+
+            return types;
+        },
     },
 
     actions: {
@@ -161,8 +182,13 @@ export const useUserListsStore = defineStore('userLists', {
                         await this.fetchListMovies(listId, this.pagination.current_page);
                     }
                     const list = this.lists.find(l => l.id === listId);
-                    if (list && typeof list.movies_count === 'number') {
-                        list.movies_count++;
+                    if (list) {
+                        if (typeof list.movies_count === 'number') {
+                            list.movies_count++;
+                        }
+                        if (list.items && response.data.item) {
+                            list.items.push(response.data.item);
+                        }
                     }
                 }
 
@@ -188,8 +214,17 @@ export const useUserListsStore = defineStore('userLists', {
                     }
 
                     const list = this.lists.find(l => l.id === listId);
-                    if (list && typeof list.movies_count === 'number' && list.movies_count > 0) {
-                        list.movies_count--;
+                    if (list) {
+                        if (typeof list.movies_count === 'number' && list.movies_count > 0) {
+                            list.movies_count--;
+                        }
+
+                        if (list.items) {
+                            const index = list.items.findIndex(item => item.tmdb_movie_id === tmdbMovieId);
+                            if (index > -1) {
+                                list.items.splice(index, 1);
+                            }
+                        }
                     }
                 }
 
@@ -206,7 +241,8 @@ export const useUserListsStore = defineStore('userLists', {
                 throw new Error(`Lista do tipo ${listType} não encontrada`);
             }
 
-            const isInList = this.isMovieInList(tmdbMovieId, listType);
+            const items = list.items || list.movies || [];
+            const isInList = items.some(item => item.tmdb_movie_id === tmdbMovieId);
 
             if (isInList) {
                 return await this.removeMovieFromList(tmdbMovieId, list.id);
@@ -232,9 +268,18 @@ export const useUserListsStore = defineStore('userLists', {
                             if (typeof likedList.movies_count === 'number') {
                                 likedList.movies_count++;
                             }
+                            if (likedList.items && response.data.item) {
+                                likedList.items.push(response.data.item);
+                            }
                         } else if (response.data.action === 'removed') {
                             if (typeof likedList.movies_count === 'number') {
                                 likedList.movies_count = Math.max(0, likedList.movies_count - 1);
+                            }
+                            if (likedList.items) {
+                                const index = likedList.items.findIndex(item => item.tmdb_movie_id === tmdbMovieId);
+                                if (index > -1) {
+                                    likedList.items.splice(index, 1);
+                                }
                             }
                         }
                     }
@@ -264,9 +309,18 @@ export const useUserListsStore = defineStore('userLists', {
                             if (typeof watchedList.movies_count === 'number') {
                                 watchedList.movies_count++;
                             }
+                            if (watchedList.items && response.data.item) {
+                                watchedList.items.push(response.data.item);
+                            }
                         } else if (response.data.action === 'removed') {
                             if (typeof watchedList.movies_count === 'number') {
                                 watchedList.movies_count = Math.max(0, watchedList.movies_count - 1);
+                            }
+                            if (watchedList.items) {
+                                const index = watchedList.items.findIndex(item => item.tmdb_movie_id === tmdbMovieId);
+                                if (index > -1) {
+                                    watchedList.items.splice(index, 1);
+                                }
                             }
                         }
                     }
