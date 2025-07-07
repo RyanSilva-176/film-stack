@@ -9,8 +9,8 @@ Route::prefix('tmdb')
     ->group(base_path('routes/api/tmdb/routes.php'));
 
 //* Rotas Dev sem auth
-// Route::prefix('dev/tmdb')
-//     ->group(base_path('routes/api/tmdb/routes.php'));
+Route::prefix('dev/tmdb')
+    ->group(base_path('routes/api/tmdb/routes.php'));
 
 //* Rotas de Listas de Filmes - Protegidas com autenticação
 Route::middleware(['web', 'auth', 'verified'])
