@@ -51,6 +51,10 @@ class TmdbSearchService extends TmdbBaseService implements TmdbSearchServiceInte
      */
     public function searchMovies(string $query, int $page = 1, array $filters = []): ?SearchResultDTO
     {
+        if (isset($filters['with_genres'])) {
+            return $this->hybridSearchWithGenre($query, $page, $filters);
+        }
+
         $hasAdvancedFilters = isset($filters['year']);
 
         if ($hasAdvancedFilters) {
@@ -83,7 +87,6 @@ class TmdbSearchService extends TmdbBaseService implements TmdbSearchServiceInte
                 $movie['poster_url'] = $this->getPosterUrl($movie['poster_path'] ?? null);
                 $movie['backdrop_url'] = $this->getBackdropUrl($movie['backdrop_path'] ?? null);
 
-                // Garante que campos essenciais estejam presentes
                 $movie['overview'] = $movie['overview'] ?? '';
                 $movie['release_date'] = $movie['release_date'] ?? null;
                 $movie['vote_average'] = (float) ($movie['vote_average'] ?? 0);
@@ -100,6 +103,90 @@ class TmdbSearchService extends TmdbBaseService implements TmdbSearchServiceInte
             }
         }
 
+        return SearchResultDTO::fromArray($results, $query, $filters);
+    }
+
+    /**
+     ** Busca híbrida combinando texto e gênero
+     * @param string $query
+     * @param int $page
+     * @param array $filters
+     * @return SearchResultDTO|null
+     */
+    protected function hybridSearchWithGenre(string $query, int $page, array $filters): ?SearchResultDTO
+    {
+        $targetGenreId = (int) $filters['with_genres'];
+        
+        // Primeiro fazer busca por texto para encontrar filmes relevantes
+        $params = [
+            'query' => trim($query),
+            'page' => 1, // Começar da página 1 para buscar mais resultados
+            'include_adult' => $filters['include_adult'] ?? false,
+        ];
+
+        $allResults = [];
+        $totalSearched = 0;
+        $maxPages = 5; // Limitar a busca a 5 páginas para evitar timeout
+        
+        // Buscar em múltiplas páginas até encontrar filmes suficientes do gênero desejado
+        for ($searchPage = 1; $searchPage <= $maxPages; $searchPage++) {
+            $params['page'] = $searchPage;
+            $searchResults = $this->makeRequest('/search/movie', $params);
+            
+            if (!$searchResults || !isset($searchResults['results'])) {
+                break;
+            }
+            
+            foreach ($searchResults['results'] as $movie) {
+                $movie = $this->genreService->enrichMovieWithGenres($movie);
+                
+                // Verificar se o filme tem o gênero desejado
+                $movieGenreIds = $movie['genre_ids'] ?? [];
+                if (in_array($targetGenreId, $movieGenreIds)) {
+                    $movie['poster_url'] = $this->getPosterUrl($movie['poster_path'] ?? null);
+                    $movie['backdrop_url'] = $this->getBackdropUrl($movie['backdrop_path'] ?? null);
+                    
+                    $movie['overview'] = $movie['overview'] ?? '';
+                    $movie['release_date'] = $movie['release_date'] ?? null;
+                    $movie['vote_average'] = (float) ($movie['vote_average'] ?? 0);
+                    $movie['vote_count'] = (int) ($movie['vote_count'] ?? 0);
+                    $movie['adult'] = (bool) ($movie['adult'] ?? false);
+                    $movie['video'] = (bool) ($movie['video'] ?? false);
+                    $movie['popularity'] = (float) ($movie['popularity'] ?? 0);
+                    
+                    $allResults[] = $movie;
+                }
+            }
+            
+            $totalSearched += count($searchResults['results']);
+            
+            // Se não há mais páginas ou já encontramos resultados suficientes
+            if ($searchPage >= ($searchResults['total_pages'] ?? 1) || count($allResults) >= 100) {
+                break;
+            }
+        }
+        
+        // Aplicar ordenação se especificada
+        if (isset($filters['sort_by'])) {
+            $allResults = $this->sortResults($allResults, $filters['sort_by']);
+        }
+        
+        // Aplicar paginação aos resultados filtrados
+        $perPage = 20;
+        $offset = ($page - 1) * $perPage;
+        $paginatedResults = array_slice($allResults, $offset, $perPage);
+        
+        // Construir resposta paginada
+        $totalResults = count($allResults);
+        $totalPages = max(1, ceil($totalResults / $perPage));
+        
+        $results = [
+            'results' => $paginatedResults,
+            'total_results' => $totalResults,
+            'total_pages' => $totalPages,
+            'page' => $page,
+        ];
+        
         return SearchResultDTO::fromArray($results, $query, $filters);
     }
 
@@ -208,7 +295,7 @@ class TmdbSearchService extends TmdbBaseService implements TmdbSearchServiceInte
                     $item = $this->genreService->enrichMovieWithGenres($item);
                     $item['poster_url'] = $this->getPosterUrl($item['poster_path'] ?? null);
                     $item['backdrop_url'] = $this->getBackdropUrl($item['backdrop_path'] ?? null);
-                    
+
                     // Garante que campos essenciais estejam presentes para filmes
                     $item['overview'] = $item['overview'] ?? '';
                     $item['release_date'] = $item['release_date'] ?? null;
@@ -354,6 +441,8 @@ class TmdbSearchService extends TmdbBaseService implements TmdbSearchServiceInte
 
         if (isset($criteria['genre_id'])) {
             $params['with_genres'] = $criteria['genre_id'];
+        } elseif (isset($criteria['with_genres'])) {
+            $params['with_genres'] = $criteria['with_genres'];
         }
 
         if (isset($criteria['year'])) {

@@ -24,7 +24,7 @@
             <!-- Filters -->
             <MovieListFilters
                 v-model:search="filters.search"
-                v-model:genre-filter="filters.genre"
+                :genre-filter="String(filters.genre || '')"
                 v-model:sort-by="filters.sortBy"
                 v-model:view-mode="viewMode"
                 v-model:selection-mode="selectionMode"
@@ -40,6 +40,7 @@
                 @bulk-move="handleBulkMove"
                 @bulk-remove="handleBulkRemove"
                 @filters-changed="handleFiltersChanged"
+                @update:genre-filter="(value) => filters.genre = value"
             />
 
             <!-- Main Content -->

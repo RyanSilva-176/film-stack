@@ -183,7 +183,7 @@ const getListLabel = (type: string) => {
         case 'liked':
             return 'Filmes Curtidos';
         case 'watchlist':
-            return 'Lista de Desejos';
+            return 'Lista Watchlist';
         case 'watched':
             return 'Filmes Assistidos';
         default:

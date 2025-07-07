@@ -192,11 +192,26 @@
                 @update:open="showCreateListModal = $event"
                 @success="handleListCreated"
             />
+
+            <!-- Delete Confirmation Modal -->
+            <ConfirmationModal
+                :is-open="showDeleteModal"
+                :title="deleteModalTitle"
+                :message="deleteModalMessage"
+                type="danger"
+                confirm-text="Deletar"
+                cancel-text="Cancelar"
+                :loading="deleteLoading"
+                @update:open="showDeleteModal = $event"
+                @confirm="handleConfirmDelete"
+                @cancel="showDeleteModal = false"
+            />
         </div>
     </AppLayout>
 </template>
 
 <script setup lang="ts">
+import ConfirmationModal from '@/components/modals/ConfirmationModal.vue';
 import CreateEditListModal from '@/components/modals/CreateEditListModal.vue';
 import { useToast } from '@/composables/useToastSystem';
 import AppLayout from '@/layouts/AppLayout.vue';
@@ -215,10 +230,20 @@ const { success } = useToast();
 
 const showCreateListModal = ref(false);
 const editingList = ref<MovieList | null>(null);
+const showDeleteModal = ref(false);
+const listToDelete = ref<MovieList | null>(null);
+const deleteLoading = ref(false);
 
 const loading = computed(() => userListsStore.loading);
 const error = computed(() => userListsStore.error);
 const customLists = computed(() => userListsStore.getCustomLists);
+
+const deleteModalTitle = computed(() => 'Deletar Lista');
+const deleteModalMessage = computed(() => 
+    listToDelete.value 
+        ? `Tem certeza que deseja deletar a lista "${listToDelete.value.name}"? Esta ação não pode ser desfeita.`
+        : ''
+);
 
 const formatDate = (dateString: string): string => {
     try {
@@ -255,13 +280,23 @@ const viewList = (list: MovieList) => {
 };
 
 const deleteList = async (list: MovieList) => {
-    if (confirm(`Tem certeza que deseja deletar a lista "${list.name}"?`)) {
-        try {
-            await userListsStore.deleteCustomList(list.id);
-            success('Lista Deletada!', `A lista "${list.name}" foi deletada com sucesso.`);
-        } catch (error) {
-            console.error('Error deleting list:', error);
-        }
+    listToDelete.value = list;
+    showDeleteModal.value = true;
+};
+
+const handleConfirmDelete = async () => {
+    if (!listToDelete.value) return;
+
+    deleteLoading.value = true;
+    try {
+        await userListsStore.deleteCustomList(listToDelete.value.id);
+        success('Lista Deletada!', `A lista "${listToDelete.value.name}" foi deletada com sucesso.`);
+        listToDelete.value = null;
+    } catch (error) {
+        console.error('Error deleting list:', error);
+    } finally {
+        deleteLoading.value = false;
+        showDeleteModal.value = false;
     }
 };
 

@@ -7,16 +7,19 @@ use App\Models\MovieListItem;
 use App\Models\User;
 use App\Services\Movie\Contracts\MovieListServiceInterface;
 use App\Services\Tmdb\Contracts\TmdbMovieServiceInterface;
+use App\Services\Tmdb\Contracts\TmdbGenreServiceInterface;
 use App\Services\Tmdb\TmdbService;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use Exception;
 
 class MovieListService implements MovieListServiceInterface
 {
     public function __construct(
         protected TmdbMovieServiceInterface $tmdbMovieService,
-        protected TmdbService $tmdbService
+        protected TmdbService $tmdbService,
+        protected TmdbGenreServiceInterface $tmdbGenreService
     ) {}
 
     /**
@@ -178,6 +181,9 @@ class MovieListService implements MovieListServiceInterface
             if ($tmdbData) {
                 $movieData = $tmdbData->toArray();
 
+                // Ensure genre data is properly enriched
+                $movieData = $this->tmdbGenreService->enrichMovieWithGenres($movieData);
+
                 $movieData['poster_url'] = $this->tmdbService->getPosterUrl($movieData['poster_path'] ?? null);
                 $movieData['backdrop_url'] = $this->tmdbService->getBackdropUrl($movieData['backdrop_path'] ?? null);
 
@@ -279,6 +285,8 @@ class MovieListService implements MovieListServiceInterface
             if ($tmdbData) {
                 $movieData = $tmdbData->toArray();
 
+                $movieData = $this->tmdbGenreService->enrichMovieWithGenres($movieData);
+
                 $movieData['poster_url'] = $this->tmdbService->getPosterUrl($movieData['poster_path'] ?? null);
                 $movieData['backdrop_url'] = $this->tmdbService->getBackdropUrl($movieData['backdrop_path'] ?? null);
 
@@ -293,8 +301,18 @@ class MovieListService implements MovieListServiceInterface
                 }
 
                 if (!empty($filters['genre'])) {
-                    $genreIds = $movieData['genre_ids'] ?? [];
-                    if (!in_array((int)$filters['genre'], $genreIds)) {
+                    $targetGenreId = (int)$filters['genre'];
+                    $movieGenreIds = [];
+
+                    if (isset($movieData['genre_ids']) && is_array($movieData['genre_ids'])) {
+                        $movieGenreIds = $movieData['genre_ids'];
+                    } elseif (isset($movieData['genres']) && is_array($movieData['genres'])) {
+                        $movieGenreIds = array_column($movieData['genres'], 'id');
+                    }
+
+                    $matchesGenre = in_array($targetGenreId, $movieGenreIds);
+
+                    if (!$matchesGenre) {
                         continue;
                     }
                 }

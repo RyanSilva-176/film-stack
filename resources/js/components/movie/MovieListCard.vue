@@ -20,28 +20,32 @@
         </div>
 
         <!-- Poster Image -->
-        <div class="relative flex-shrink-0 overflow-hidden" :class="viewMode === 'list' ? 'h-50 w-32' : 'aspect-[2/3] w-full'">
+        <div class="relative flex flex-shrink-0 overflow-hidden" :class="viewMode === 'list' ? 'h-full min-h-50 w-32' : 'aspect-[2/3] w-full'">
             <img
                 v-if="posterImageUrl && !imageError"
                 :src="posterImageUrl"
                 :alt="movie.title"
-                class="h-full w-full object-cover transition-transform duration-300 group-hover:scale-110"
+                class="h-full w-full flex-1 object-cover transition-transform duration-300 group-hover:scale-110"
                 loading="lazy"
                 @error="handleImageError"
                 @load="handleImageLoad"
                 ref="imageRef"
+                style="object-fit: cover"
             />
 
             <!-- Placeholder for missing poster -->
-            <div v-else class="flex h-full w-full items-center justify-center bg-gray-800 text-gray-400">
+            <div v-else class="flex h-full w-full flex-1 items-center justify-center bg-gray-800 text-gray-400">
                 <div class="text-center">
                     <FontAwesomeIcon icon="film" :class="viewMode === 'list' ? 'h-6 w-6' : 'h-12 w-12'" />
                     <p v-if="viewMode !== 'list'" class="mt-2 text-xs text-gray-500">Sem imagem</p>
                 </div>
             </div>
-            
+
             <!-- Loading state -->
-            <div v-if="posterImageUrl && !imageLoaded && !imageError && imageInitialized" class="absolute inset-0 flex items-center justify-center bg-gray-800">
+            <div
+                v-if="posterImageUrl && !imageLoaded && !imageError && imageInitialized"
+                class="absolute inset-0 flex items-center justify-center bg-gray-800"
+            >
                 <div
                     :class="viewMode === 'list' ? 'h-4 w-4 border-2' : 'h-8 w-8 border-4'"
                     class="animate-spin rounded-full border-gray-600 border-t-white"
@@ -124,22 +128,26 @@
                     </div>
                 </div>
 
-                <div class="flex items-center gap-4 text-sm text-gray-400">
-                    <span v-if="movie.release_date">
+                <div class="flex flex-wrap items-center gap-3 text-sm text-gray-400">
+                    <!-- <span
+                        v-if="listItem?.watched_at"
+                        class="flex items-center gap-1 rounded-full bg-green-900/30 px-2 py-0.5 text-green-400"
+                    >
+                        <FontAwesomeIcon icon="check-circle" class="h-3 w-3" />
+                        Assistido
+                    </span> -->
+
+                    <span v-if="movie.release_date" class="flex items-center gap-1 rounded-full bg-gray-700/60 px-2 py-0.5">
+                        <FontAwesomeIcon icon="calendar-alt" class="h-3 w-3 text-gray-400" />
                         {{ new Date(movie.release_date).getFullYear() }}
                     </span>
 
-                    <span v-if="movie.runtime" class="flex items-center gap-1">
-                        <FontAwesomeIcon icon="clock" class="h-3 w-3" />
+                    <span v-if="movie.runtime" class="flex items-center gap-1 rounded-full bg-gray-700/60 px-2 py-0.5">
+                        <FontAwesomeIcon icon="clock" class="h-3 w-3 text-gray-400" />
                         {{ movie.runtime }} min
                     </span>
 
-                    <span v-if="listItem?.watched_at" class="flex items-center gap-1 text-green-400">
-                        <FontAwesomeIcon icon="check-circle" class="h-3 w-3" />
-                        Assistido
-                    </span>
-
-                    <span v-if="listItem?.rating" class="flex items-center gap-1 text-yellow-400">
+                    <span v-if="listItem?.rating" class="flex items-center gap-1 rounded-full bg-yellow-900/30 px-2 py-0.5 text-yellow-400">
                         <FontAwesomeIcon icon="star" class="h-3 w-3" />
                         {{ listItem.rating }}/10
                     </span>
@@ -232,7 +240,7 @@ const posterImageUrl = computed(() => {
     if (props.movie.poster_path) return `https://image.tmdb.org/t/p/w342${props.movie.poster_path}`;
     if (props.movie.backdrop_url) return props.movie.backdrop_url;
     if (props.movie.backdrop_path) return `https://image.tmdb.org/t/p/w342${props.movie.backdrop_path}`;
-    
+
     return null;
 });
 
@@ -354,7 +362,7 @@ watch(
             imageInitialized.value = true;
         }
     },
-    { immediate: true }
+    { immediate: true },
 );
 </script>
 

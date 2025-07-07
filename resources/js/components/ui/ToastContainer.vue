@@ -1,6 +1,6 @@
 <template>
   <Teleport to="body">
-    <div class="fixed top-4 right-4 left-4 sm:left-auto z-[9999] space-y-2 max-w-sm w-full sm:w-auto sm:max-w-sm pointer-events-none">
+    <div class="fixed top-4 right-2 left-2 sm:right-4 sm:left-auto z-[9999] space-y-2 max-w-xs sm:max-w-sm w-full sm:w-auto pointer-events-none">
       <TransitionGroup
         name="toast"
         tag="div"

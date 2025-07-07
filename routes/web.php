@@ -13,7 +13,7 @@ Route::get('/', function () {
 
 Route::middleware(['auth', 'verified', 'web'])->group(function () {
     Route::get('dashboard', [DashboardController::class, 'index'])->name('dashboard');
-    
+
     // Search routes
     Route::get('search', [SearchController::class, 'index'])->name('search');
     Route::get('genres', [SearchController::class, 'genres'])->name('genres');
@@ -23,7 +23,7 @@ Route::middleware(['auth', 'verified', 'web'])->group(function () {
     Route::get('lists/watched', [MovieListController::class, 'watchedPage'])->name('lists.watched');
     Route::get('lists/custom', [MovieListController::class, 'customPage'])->name('lists.custom');
     Route::get('lists/{movieList}', [MovieListController::class, 'customListDetail'])->name('lists.detail');
-    
+
     // Redirect legacy URLs to new format
     Route::get('movie-lists/{movieList}', function ($movieList) {
         return redirect()->route('lists.detail', $movieList);
@@ -35,9 +35,13 @@ Route::get('public-movie-lists/{movieList}', [MovieListController::class, 'publi
     ->name('public-movie-lists.show')
     ->middleware(['public-list']);
 
-Route::get('ui', function () {
-    return Inertia::render('ButtonDemo');
-})->middleware(['web'])->name('ui');
+// Route::get('ui', function () {
+//     return Inertia::render('UI');
+// })->middleware(['web'])->name('ui');
+
+// Route::get('toast', function () {
+//     return Inertia::render('Toast');
+// })->middleware(['web'])->name('toast');
 
 
 Route::get('/auth/{provider}/redirect', [SocialiteController::class, 'create'])->where('provider', 'google');

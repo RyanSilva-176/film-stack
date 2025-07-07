@@ -199,10 +199,8 @@ const handleSubmit = async () => {
 
     try {
         if (isEditing.value && props.list) {
-            // TODO: Implementar edição de lista quando a API estiver pronta
             showError('Funcionalidade em Desenvolvimento', 'A edição de listas será implementada em breve.');
         } else {
-            // Criar nova lista
             const result = await userListsStore.createCustomList(form.name.trim(), form.description.trim() || undefined, form.is_public);
 
             if (result.success) {

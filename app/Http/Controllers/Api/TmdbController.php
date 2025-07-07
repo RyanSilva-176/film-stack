@@ -115,6 +115,7 @@ class TmdbController extends Controller
         $includeAdult = request('include_adult', false);
         $year = request('year');
         $sortBy = request('sortBy');
+        $genreId = request('genreId');
 
         if (!$query || trim($query) === '') {
             return response()->json(['error' => 'Query é obrigatória e não pode estar vazia'], 400);
@@ -131,6 +132,10 @@ class TmdbController extends Controller
             
             if ($sortBy) {
                 $filters['sort_by'] = $sortBy;
+            }
+
+            if ($genreId) {
+                $filters['with_genres'] = (int) $genreId;
             }
 
             $results = Tmdb::searchMovies($query, $page, $filters);

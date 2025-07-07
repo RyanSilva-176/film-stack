@@ -1,35 +1,35 @@
 <template>
     <div
         v-if="visible"
-        class="relative w-full max-w-sm rounded-lg bg-gray-900 p-4 text-white shadow-2xl border border-gray-700 cursor-pointer"
+        class="relative w-full max-w-xs sm:max-w-sm rounded-lg bg-gray-900 p-3 sm:p-4 text-white shadow-2xl border border-gray-700 cursor-pointer"
         :class="toastClasses"
         @click="close"
         @mouseenter="pauseTimer"
         @mouseleave="resumeTimer"
     >
-        <div class="flex items-center gap-3">
+        <div class="flex items-center gap-2 sm:gap-3">
             <!-- Icon -->
             <div class="flex-shrink-0">
                 <FontAwesomeIcon 
                     :icon="iconName" 
                     :class="iconClasses"
-                    class="h-5 w-5"
+                    class="h-4 w-4 sm:h-5 sm:w-5"
                 />
             </div>
             
             <!-- Content -->
-            <div class="flex-1 min-w-0">
-                <h4 v-if="title" class="font-semibold text-sm">{{ title }}</h4>
-                <p class="text-sm" :class="{ 'mt-1': title }">{{ message }}</p>
+            <div class="flex-1 min-w-0 pr-2">
+                <h4 v-if="title" class="font-semibold text-xs sm:text-sm truncate">{{ title }}</h4>
+                <p class="text-xs sm:text-sm break-words" :class="{ 'mt-1': title }">{{ message }}</p>
             </div>
             
             <!-- Close Button -->
             <button
                 @click.stop="close"
-                class="flex-shrink-0 text-gray-400 hover:text-white transition-colors ml-2 rounded-full p-1 hover:bg-gray-700"
+                class="flex-shrink-0 text-gray-400 hover:text-white transition-colors rounded-full p-1 hover:bg-gray-700"
                 aria-label="Fechar notificação"
             >
-                <FontAwesomeIcon icon="times" class="h-4 w-4" />
+                <FontAwesomeIcon icon="times" class="h-3 w-3 sm:h-4 sm:w-4" />
             </button>
         </div>
         
