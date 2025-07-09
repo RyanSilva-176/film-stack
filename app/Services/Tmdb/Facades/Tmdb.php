@@ -32,7 +32,7 @@ use Illuminate\Support\Facades\Facade;
  * @method static array|null getMoviesWithImages(string $listType = 'popular', int $page = 1)
  * @method static array|null searchWithImages(string $query, int $page = 1)
  *
- * @see \App\Services\TmdbService
+ * @see \App\Services\Tmdb\TmdbService
  */
 class Tmdb extends Facade
 {

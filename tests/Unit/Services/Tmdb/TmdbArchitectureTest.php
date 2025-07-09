@@ -143,7 +143,7 @@ class TmdbArchitectureTest extends TestCase
             $movieService
         );
 
-        $tmdbService = $this->app->make(\App\Services\TmdbService::class);
-        $this->assertInstanceOf(\App\Services\TmdbService::class, $tmdbService);
+        $tmdbService = $this->app->make(\App\Services\Tmdb\TmdbService::class);
+        $this->assertInstanceOf(\App\Services\Tmdb\TmdbService::class, $tmdbService);
     }
 }
