@@ -3,109 +3,64 @@
 namespace App\Services\Tmdb\Services;
 
 use App\Services\Tmdb\Contracts\TmdbMovieServiceInterface;
-use App\Services\Tmdb\Contracts\TmdbGenreServiceInterface;
-use App\Services\Tmdb\Contracts\TmdbImageServiceInterface;
 use App\Services\Tmdb\DTOs\MovieDTO;
+use App\Services\Tmdb\Enrichers\MovieDataEnricher;
+use App\Services\Tmdb\Processors\MovieCollectionProcessor;
+use App\Services\Tmdb\Builders\SearchCriteriaBuilder;
 use Illuminate\Support\Facades\Log;
 use Exception;
 
 class TmdbMovieService extends TmdbBaseService implements TmdbMovieServiceInterface
 {
-    protected TmdbGenreServiceInterface $genreService;
-    protected TmdbImageServiceInterface $imageService;
-
-    public function __construct(TmdbGenreServiceInterface $genreService, TmdbImageServiceInterface $imageService)
-    {
+    public function __construct(
+        private MovieDataEnricher $enricher,
+        private MovieCollectionProcessor $processor
+    ) {
         parent::__construct();
-        $this->genreService = $genreService;
-        $this->imageService = $imageService;
     }
 
-    /**
-     ** Busca filmes populares com paginação
-     * @param int $page
-     * @return array|null
-     */
+    //? ==================== MÉTODOS DE LISTAGEM ====================
+
     public function getPopularMovies(int $page = 1): ?array
     {
-        $params = $this->validatePaginationParams(['page' => $page]);
-        $results = $this->makeRequest('/movie/popular', $params);
-
-        return $this->enrichResultsWithGenres($results);
+        return $this->getMoviesByEndpoint('/movie/popular', $page);
     }
 
-    /**
-     ** Busca filmes em cartaz com paginação
-     * @param int $page
-     * @return array|null
-     */
     public function getNowPlayingMovies(int $page = 1): ?array
     {
-        $params = $this->validatePaginationParams(['page' => $page]);
-        $results = $this->makeRequest('/movie/now_playing', $params);
-
-        return $this->enrichResultsWithGenres($results);
+        return $this->getMoviesByEndpoint('/movie/now_playing', $page);
     }
 
-    /**
-     ** Busca filmes mais bem avaliados com paginação
-     * @param int $page
-     * @return array|null
-     */
     public function getTopRatedMovies(int $page = 1): ?array
     {
-        $params = $this->validatePaginationParams(['page' => $page]);
-        $results = $this->makeRequest('/movie/top_rated', $params);
-
-        return $this->enrichResultsWithGenres($results);
+        return $this->getMoviesByEndpoint('/movie/top_rated', $page);
     }
 
-    /**
-     * Busca próximos lançamentos com paginação
-     * @param int $page
-     * @return array|null
-     */
     public function getUpcomingMovies(int $page = 1): ?array
     {
-        $params = $this->validatePaginationParams(['page' => $page]);
-        $results = $this->makeRequest('/movie/upcoming', $params);
-
-        return $this->enrichResultsWithGenres($results);
+        return $this->getMoviesByEndpoint('/movie/upcoming', $page);
     }
 
-    /**
-     ** Busca detalhes de um filme específico
-     * @param int $movieId
-     * @param array $appendTo
-     */
+    public function getTrendingMovies(string $timeWindow = 'day', int $page = 1): ?array
+    {
+        return $this->getMoviesByEndpoint("/trending/movie/{$timeWindow}", $page);
+    }
+
+    //* ==================== MÉTODOS DE DETALHES ====================
+
     public function getMovieDetails(int $movieId, array $appendTo = []): ?MovieDTO
     {
-        $params = [];
-
-        $defaultAppendTo = ['credits', 'videos', 'images', 'recommendations', 'similar'];
-        $appendTo = array_unique(array_merge($defaultAppendTo, $appendTo));
-
-        if (!empty($appendTo)) {
-            $params['append_to_response'] = implode(',', $appendTo);
-        }
-
+        $params = $this->buildAppendToParams($appendTo);
         $movie = $this->makeRequest("/movie/{$movieId}", $params);
 
         if (!$movie) {
             return null;
         }
 
-        $movie = $this->genreService->enrichMovieWithGenres($movie);
-
-        return MovieDTO::fromArray($movie);
+        $enrichedMovie = $this->enricher->enrichMovie($movie);
+        return MovieDTO::fromArray($enrichedMovie);
     }
 
-    /**
-     ** Busca múltiplos filmes por IDs
-     * @param array $movieIds
-     * @param array $appendTo
-     * @return array
-     */
     public function getMoviesByIds(array $movieIds, array $appendTo = []): array
     {
         $movies = [];
@@ -117,7 +72,7 @@ class TmdbMovieService extends TmdbBaseService implements TmdbMovieServiceInterf
                     $movies[] = $movie;
                 }
             } catch (Exception $e) {
-                Log::warning('Falha ao buscar filme', [
+                Log::warning('Failed to fetch movie', [
                     'movie_id' => $movieId,
                     'error' => $e->getMessage()
                 ]);
@@ -127,149 +82,108 @@ class TmdbMovieService extends TmdbBaseService implements TmdbMovieServiceInterf
         return $movies;
     }
 
-    /**
-     ** Busca filmes trending
-     * @param string $timeWindow
-     * @param int $page
-     * @return array|null
-     */
-    public function getTrendingMovies(string $timeWindow = 'day', int $page = 1): ?array
-    {
-        $params = $this->validatePaginationParams(['page' => $page]);
-        $results = $this->makeRequest("/trending/movie/{$timeWindow}", $params);
+    //* ==================== MÉTODOS DE DESCOBERTA E FILTROS ====================
 
-        return $this->enrichResultsWithGenres($results);
-    }
-
-    /**
-     ** Descobre filmes com filtros avançados
-     * @param array $filters
-     * @param int $page
-     * @return array|null
-     */
     public function discoverMovies(array $filters = [], int $page = 1): ?array
     {
-        $params = array_merge($filters, ['page' => $page]);
-        $params = $this->validatePaginationParams($params);
-
+        $params = $this->buildDiscoverParams($filters, $page);
         $results = $this->makeRequest('/discover/movie', $params);
 
-        return $this->enrichResultsWithGenres($results);
+        return $this->processor->processResults($results);
     }
 
-    /**
-     ** Busca filmes por gênero específico
-     * @param int $genreId
-     * @param int $page
-     * @param array $additionalFilters
-     * @return array|null
-     */
     public function getMoviesByGenre(int $genreId, int $page = 1, array $additionalFilters = []): ?array
     {
-        $filters = array_merge([
-            'with_genres' => $genreId,
-            'sort_by' => 'popularity.desc'
-        ], $additionalFilters);
+        $criteria = SearchCriteriaBuilder::create()
+            ->withGenre($genreId)
+            ->withPage($page)
+            ->withSorting('popularity.desc')
+            ->withCustomFilters($additionalFilters)
+            ->build();
 
-        return $this->discoverMovies($filters, $page);
+        return $this->discoverMovies($criteria, $page);
     }
 
-    /**
-     ** Busca filmes similares
-     * @param int $movieId
-     * @param int $page
-     * @return array|null
-     */
+    public function getMoviesByYear(int $year, int $page = 1, string $sortBy = 'popularity.desc'): ?array
+    {
+        $criteria = SearchCriteriaBuilder::create()
+            ->withYear($year)
+            ->withPage($page)
+            ->withSorting($sortBy)
+            ->build();
+
+        return $this->discoverMovies($criteria, $page);
+    }
+
+    public function getMoviesByDecade(int $decade, int $page = 1): ?array
+    {
+        $criteria = SearchCriteriaBuilder::create()
+            ->withDateRange("{$decade}-01-01", ($decade + 9) . "-12-31")
+            ->withPage($page)
+            ->withSorting('popularity.desc')
+            ->build();
+
+        return $this->discoverMovies($criteria, $page);
+    }
+
+    public function getMoviesByMinRating(float $minRating, int $page = 1, int $minVotes = 100): ?array
+    {
+        $criteria = SearchCriteriaBuilder::create()
+            ->withRating($minRating, $minVotes)
+            ->withPage($page)
+            ->withSorting('vote_average.desc')
+            ->build();
+
+        return $this->discoverMovies($criteria, $page);
+    }
+
+    //* ==================== MÉTODOS DE RELACIONAMENTO ====================
+
     public function getSimilarMovies(int $movieId, int $page = 1): ?array
     {
-        $params = $this->validatePaginationParams(['page' => $page]);
-        $results = $this->makeRequest("/movie/{$movieId}/similar", $params);
-
-        return $this->enrichResultsWithGenres($results);
+        return $this->getMoviesByEndpoint("/movie/{$movieId}/similar", $page);
     }
 
-    /**
-     ** Busca recomendações de filmes
-     * @param int $movieId
-     * @param int $page
-     * @return array|null
-     */
     public function getMovieRecommendations(int $movieId, int $page = 1): ?array
     {
-        $params = $this->validatePaginationParams(['page' => $page]);
-        $results = $this->makeRequest("/movie/{$movieId}/recommendations", $params);
-
-        return $this->enrichResultsWithGenres($results);
+        return $this->getMoviesByEndpoint("/movie/{$movieId}/recommendations", $page);
     }
 
-    /**
-     ** Busca créditos do filme
-     * @param int $movieId
-     * @return array|null
-     */
+    //* ==================== MÉTODOS DE DADOS ESPECÍFICOS ====================
+
     public function getMovieCredits(int $movieId): ?array
     {
         return $this->makeRequest("/movie/{$movieId}/credits");
     }
 
-    /**
-     ** Busca vídeos do filme
-     * @param int $movieId
-     * @return array|null
-     */
     public function getMovieVideos(int $movieId): ?array
     {
         return $this->makeRequest("/movie/{$movieId}/videos");
     }
 
-    /**
-     ** Busca imagens do filme
-     * @param int $movieId
-     * @return array|null
-     */
     public function getMovieImages(int $movieId): ?array
     {
         return $this->makeRequest("/movie/{$movieId}/images");
     }
 
-    /**
-     ** Busca reviews do filme
-     * @param int $movieId
-     * @param int $page
-     * @return array|null
-     */
     public function getMovieReviews(int $movieId, int $page = 1): ?array
     {
         $params = $this->validatePaginationParams(['page' => $page]);
         return $this->makeRequest("/movie/{$movieId}/reviews", $params);
     }
 
-    /**
-     ** Busca palavras-chave do filme
-     * @param int $movieId
-     * @return array|null
-     */
     public function getMovieKeywords(int $movieId): ?array
     {
         return $this->makeRequest("/movie/{$movieId}/keywords");
     }
 
-    /**
-     ** Busca informações de lançamento do filme
-     * @param int $movieId
-     * @return array|null
-     */
     public function getMovieReleaseDates(int $movieId): ?array
     {
         return $this->makeRequest("/movie/{$movieId}/release_dates");
     }
 
-    /**
-     ** Busca filme por ID externo
-     * @param string $externalId
-     * @param string $source
-     * @return MovieDTO|null
-     */
+    //* ==================== MÉTODOS DE BUSCA ESPECIALIZADA ====================
+
     public function findMovieByExternalId(string $externalId, string $source = 'imdb_id'): ?MovieDTO
     {
         $results = $this->makeRequest("/find/{$externalId}", [
@@ -280,97 +194,12 @@ class TmdbMovieService extends TmdbBaseService implements TmdbMovieServiceInterf
             return null;
         }
 
-        $movie = $results['movie_results'][0];
-        $movie = $this->genreService->enrichMovieWithGenres($movie);
-
+        $movie = $this->enricher->enrichMovie($results['movie_results'][0]);
         return MovieDTO::fromArray($movie);
     }
 
-    /**
-     ** Busca filmes por ano específico
-     * @param int $year
-     * @param int $page
-     * @param string $sortBy
-     * @return array|null
-     */
-    public function getMoviesByYear(int $year, int $page = 1, string $sortBy = 'popularity.desc'): ?array
-    {
-        return $this->discoverMovies([
-            'year' => $year,
-            'sort_by' => $sortBy
-        ], $page);
-    }
+    //* ==================== MÉTODOS DE CONVERSÃO E UTILITÁRIOS ====================
 
-    /**
-     ** Busca filmes por década
-     * @param int $decade
-     * @param int $page
-     * @return array|null
-     */
-    public function getMoviesByDecade(int $decade, int $page = 1): ?array
-    {
-        $startYear = $decade;
-        $endYear = $decade + 9;
-
-        return $this->discoverMovies([
-            'release_date.gte' => "{$startYear}-01-01",
-            'release_date.lte' => "{$endYear}-12-31",
-            'sort_by' => 'popularity.desc'
-        ], $page);
-    }
-
-    /**
-     ** Busca filmes por avaliação mínima
-     * @param float $minRating
-     * @param int $page
-     * @param int $minVotes
-     * @return array|null
-     */
-    public function getMoviesByMinRating(float $minRating, int $page = 1, int $minVotes = 100): ?array
-    {
-        return $this->discoverMovies([
-            'vote_average.gte' => $minRating,
-            'vote_count.gte' => $minVotes,
-            'sort_by' => 'vote_average.desc'
-        ], $page);
-    }
-
-    /**
-     ** Traz ps gêneros e URLs de imagens
-     * @param array|null $results
-     * @return array|null
-     */
-    protected function enrichResultsWithGenres(?array $results): ?array
-    {
-        if (!$results || !isset($results['results'])) {
-            return $results;
-        }
-
-        $results['results'] = array_map(function ($movie) {
-            $movie = $this->genreService->enrichMovieWithGenres($movie);
-
-            $movie['poster_url'] = $this->imageService->getPosterUrl($movie['poster_path'] ?? null);
-            $movie['backdrop_url'] = $this->imageService->getBackdropUrl($movie['backdrop_path'] ?? null);
-
-            $movie['overview'] = $movie['overview'] ?? '';
-            $movie['release_date'] = $movie['release_date'] ?? null;
-            $movie['vote_average'] = (float) ($movie['vote_average'] ?? 0);
-            $movie['vote_count'] = (int) ($movie['vote_count'] ?? 0);
-            $movie['adult'] = (bool) ($movie['adult'] ?? false);
-            $movie['video'] = (bool) ($movie['video'] ?? false);
-            $movie['popularity'] = (float) ($movie['popularity'] ?? 0);
-
-            return $movie;
-        }, $results['results']);
-
-        return $results;
-    }
-
-    /**
-     ** Converte array de filmes para DTOs
-     * @param array $movies
-     * @return array
-     */
     public function convertToMovieDTOs(array $movies): array
     {
         return array_map(
@@ -379,25 +208,46 @@ class TmdbMovieService extends TmdbBaseService implements TmdbMovieServiceInterf
         );
     }
 
-    /**
-     ** Busca filmes com informações completas para listagem
-     * @param string $listType
-     * @param int $page
-     * @return array|null
-     */
     public function getMoviesForListing(string $listType = 'popular', int $page = 1): ?array
     {
-        switch ($listType) {
-            case 'now_playing':
-                return $this->getNowPlayingMovies($page);
-            case 'top_rated':
-                return $this->getTopRatedMovies($page);
-            case 'upcoming':
-                return $this->getUpcomingMovies($page);
-            case 'trending':
-                return $this->getTrendingMovies('day', $page);
-            default:
-                return $this->getPopularMovies($page);
-        }
+        return match ($listType) {
+            'now_playing' => $this->getNowPlayingMovies($page),
+            'top_rated' => $this->getTopRatedMovies($page),
+            'upcoming' => $this->getUpcomingMovies($page),
+            'trending' => $this->getTrendingMovies('day', $page),
+            default => $this->getPopularMovies($page)
+        };
+    }
+
+    //? ==================== MÉTODOS PRIVADOS AUXILIARES ====================
+
+    /**
+     ** Método genérico para buscar filmes por endpoint com paginação
+     */
+    private function getMoviesByEndpoint(string $endpoint, int $page): ?array
+    {
+        $params = $this->validatePaginationParams(['page' => $page]);
+        $results = $this->makeRequest($endpoint, $params);
+        return $this->processor->processResults($results);
+    }
+
+    /**
+     ** Constrói parâmetros para append_to_response
+     */
+    private function buildAppendToParams(array $appendTo): array
+    {
+        $defaultAppendTo = ['credits', 'videos', 'images', 'recommendations', 'similar'];
+        $appendTo = array_unique(array_merge($defaultAppendTo, $appendTo));
+
+        return empty($appendTo) ? [] : ['append_to_response' => implode(',', $appendTo)];
+    }
+
+    /**
+     ** Constrói parâmetros para discover endpoint
+     */
+    private function buildDiscoverParams(array $filters, int $page): array
+    {
+        $params = array_merge($filters, ['page' => $page]);
+        return $this->validatePaginationParams($params);
     }
 }

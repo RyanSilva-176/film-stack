@@ -5,11 +5,11 @@ namespace App\Providers;
 use Illuminate\Support\ServiceProvider;
 use App\Services\Tmdb\TmdbService;
 
-//* Serviços refatorados
-use App\Services\Tmdb\Services\TmdbMovieServiceRefactored;
-use App\Services\Tmdb\Services\TmdbSearchServiceRefactored;
+//* Services principais
+use App\Services\Tmdb\Services\TmdbMovieService;
+use App\Services\Tmdb\Services\TmdbSearchService;
 
-//? Serviços que não mudaram
+//* Services que não mudaram
 use App\Services\Tmdb\Services\TmdbGenreService;
 use App\Services\Tmdb\Services\TmdbImageService;
 
@@ -33,17 +33,28 @@ class TmdbServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
-        $this->app->bind(TmdbImageServiceInterface::class, TmdbImageService::class);
-        $this->app->bind(TmdbGenreServiceInterface::class, TmdbGenreService::class);
+        $this->registerBaseServices();
 
         $this->registerNewComponents();
+
         $this->registerSearchStrategies();
-        $this->registerRefactoredServices();
+
+        $this->registerMainServices();
+
         $this->registerFacade();
     }
 
     /**
-     * Registra novos componentes da noca refatoração
+     * Registra serviços base que não foram alterados
+     */
+    private function registerBaseServices(): void
+    {
+        $this->app->bind(TmdbImageServiceInterface::class, TmdbImageService::class);
+        $this->app->bind(TmdbGenreServiceInterface::class, TmdbGenreService::class);
+    }
+
+    /**
+     * Registra novos componentes da refatoração
      */
     private function registerNewComponents(): void
     {
@@ -86,19 +97,19 @@ class TmdbServiceProvider extends ServiceProvider
     }
 
     /**
-     * Registra serviços refatorados
+     * Registra serviços principais
      */
-    private function registerRefactoredServices(): void
+    private function registerMainServices(): void
     {
         $this->app->bind(TmdbMovieServiceInterface::class, function ($app) {
-            return new TmdbMovieServiceRefactored(
+            return new TmdbMovieService(
                 $app->make(MovieDataEnricher::class),
                 $app->make(MovieCollectionProcessor::class)
             );
         });
 
         $this->app->bind(TmdbSearchServiceInterface::class, function ($app) {
-            return new TmdbSearchServiceRefactored(
+            return new TmdbSearchService(
                 $app->make(SimpleMovieSearchStrategy::class),
                 $app->make(GenreFilteredSearchStrategy::class),
                 $app->make(AdvancedSearchStrategy::class),
@@ -131,7 +142,11 @@ class TmdbServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
-        //
+        if ($this->app->runningInConsole()) {
+            $this->publishes([
+                __DIR__ . '/../../config/tmdb.php' => config_path('tmdb.php'),
+            ], 'tmdb-config');
+        }
     }
 
     /**
@@ -140,7 +155,6 @@ class TmdbServiceProvider extends ServiceProvider
     public function provides(): array
     {
         return [
-            // Contratos principais
             TmdbImageServiceInterface::class,
             TmdbGenreServiceInterface::class,
             TmdbSearchServiceInterface::class,
@@ -148,14 +162,14 @@ class TmdbServiceProvider extends ServiceProvider
             TmdbService::class,
             'tmdb',
 
-            //* Novos componentes refatorados
+            //* Novos componentes
             MovieDataEnricher::class,
             MovieCollectionProcessor::class,
             SimpleMovieSearchStrategy::class,
             GenreFilteredSearchStrategy::class,
             AdvancedSearchStrategy::class,
-            TmdbMovieServiceRefactored::class,
-            TmdbSearchServiceRefactored::class,
+            TmdbMovieService::class,
+            TmdbSearchService::class,
         ];
     }
 }

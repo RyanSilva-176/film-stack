@@ -4,22 +4,7 @@ return [
 
     /*
     |--------------------------------------------------------------------------
-    * Use Refactored Services
-    |--------------------------------------------------------------------------
-    |
-    | Esta configuração permite alternar entre os serviços originais e
-    | refatorados do TMDB. Útil para migração gradual e testes A/B.
-    |
-    | true = Usa serviços refatorados (nova arquitetura)
-    | false = Usa serviços originais (comportamento atual)
-    |
-    */
-
-    'use_refactored_services' => env('TMDB_USE_REFACTORED_SERVICES', false),
-
-    /*
-    |--------------------------------------------------------------------------
-    * Cache Settings
+    | Cache Settings
     |--------------------------------------------------------------------------
     |
     | Configurações específicas de cache para os serviços TMDB

@@ -6,8 +6,8 @@ use Tests\TestCase;
 use App\Services\Tmdb\TmdbService;
 use App\Services\Tmdb\Contracts\TmdbMovieServiceInterface;
 use App\Services\Tmdb\Contracts\TmdbSearchServiceInterface;
-use App\Services\Tmdb\Services\TmdbMovieServiceRefactored;
-use App\Services\Tmdb\Services\TmdbSearchServiceRefactored;
+use App\Services\Tmdb\Services\TmdbMovieService;
+use App\Services\Tmdb\Services\TmdbSearchService;
 use App\Services\Tmdb\Enrichers\MovieDataEnricher;
 use App\Services\Tmdb\Processors\MovieCollectionProcessor;
 use App\Services\Tmdb\Strategies\SimpleMovieSearchStrategy;
@@ -25,14 +25,14 @@ class RefactoredServicesMigrationTest extends TestCase
     {
         $movieService = app(TmdbMovieServiceInterface::class);
         
-        $this->assertInstanceOf(TmdbMovieServiceRefactored::class, $movieService);
+        $this->assertInstanceOf(TmdbMovieService::class, $movieService);
     }
 
     public function test_search_service_resolves_to_refactored_version(): void
     {
         $searchService = app(TmdbSearchServiceInterface::class);
         
-        $this->assertInstanceOf(TmdbSearchServiceRefactored::class, $searchService);
+        $this->assertInstanceOf(TmdbSearchService::class, $searchService);
     }
 
     public function test_new_components_are_resolvable(): void
@@ -50,7 +50,7 @@ class RefactoredServicesMigrationTest extends TestCase
     {
         $movieService = app(TmdbMovieServiceInterface::class);
     
-        $this->assertInstanceOf(TmdbMovieServiceRefactored::class, $movieService);
+        $this->assertInstanceOf(TmdbMovieService::class, $movieService);
         
         $this->assertTrue(method_exists($movieService, 'getPopularMovies'));
         $this->assertTrue(method_exists($movieService, 'getMovieDetails'));
