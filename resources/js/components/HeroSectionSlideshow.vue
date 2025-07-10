@@ -1,5 +1,5 @@
 <template>
-    <section class="relative h-[60vh] min-h-[400px] overflow-hidden md:h-[70vh] max-w-full">
+    <section class="relative h-[60vh] min-h-[400px] max-w-full overflow-hidden md:h-[70vh]">
         <!-- Vue Carousel -->
         <Carousel
             class="h-full w-full"

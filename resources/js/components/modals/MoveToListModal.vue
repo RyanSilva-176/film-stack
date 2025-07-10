@@ -12,7 +12,7 @@
 
             <div class="py-4">
                 <!-- Current List Info -->
-                <div v-if="currentListName" class="mb-4 p-3 bg-sidebar-accent rounded-lg">
+                <div v-if="currentListName" class="mb-4 rounded-lg bg-sidebar-accent p-3">
                     <div class="flex items-center gap-2">
                         <FontAwesomeIcon :icon="currentListIcon" class="text-sidebar-accent-foreground" />
                         <span class="text-sm text-sidebar-accent-foreground">
@@ -23,7 +23,7 @@
 
                 <!-- Destination Lists -->
                 <div class="space-y-2">
-                    <h4 class="text-sm font-medium text-sidebar-foreground mb-3">Escolher lista de destino:</h4>
+                    <h4 class="mb-3 text-sm font-medium text-sidebar-foreground">Escolher lista de destino:</h4>
 
                     <!-- Standard Lists -->
                     <div class="space-y-1">
@@ -32,55 +32,51 @@
                             :key="list.id"
                             @click="handleSelectList(list)"
                             :disabled="loading || list.id === currentListId"
-                            class="w-full flex items-center gap-3 p-3 rounded-lg transition-colors hover:bg-sidebar-accent disabled:opacity-50 disabled:cursor-not-allowed"
+                            class="flex w-full items-center gap-3 rounded-lg p-3 transition-colors hover:bg-sidebar-accent disabled:cursor-not-allowed disabled:opacity-50"
                             :class="list.id === currentListId ? 'bg-sidebar-accent/50' : 'hover:bg-sidebar-accent'"
                         >
-                            <div class="flex items-center gap-2 flex-1">
+                            <div class="flex flex-1 items-center gap-2">
                                 <FontAwesomeIcon :icon="getListIcon(list.type)" :class="getListIconClass(list.type)" />
                                 <span class="text-sidebar-foreground">{{ getListLabel(list.type) }}</span>
-                                <span class="text-xs text-sidebar-accent-foreground bg-sidebar-accent px-2 py-1 rounded-full">
+                                <span class="rounded-full bg-sidebar-accent px-2 py-1 text-xs text-sidebar-accent-foreground">
                                     {{ list.movies_count }}
                                 </span>
                             </div>
-                            <div v-if="list.id === currentListId" class="text-xs text-sidebar-accent-foreground">
-                                Lista atual
-                            </div>
+                            <div v-if="list.id === currentListId" class="text-xs text-sidebar-accent-foreground">Lista atual</div>
                         </button>
                     </div>
 
                     <!-- Custom Lists -->
                     <div v-if="availableCustomLists.length > 0" class="mt-4">
-                        <h5 class="text-xs font-medium text-sidebar-accent-foreground mb-2">Listas Personalizadas</h5>
+                        <h5 class="mb-2 text-xs font-medium text-sidebar-accent-foreground">Listas Personalizadas</h5>
                         <div class="space-y-1">
                             <button
                                 v-for="list in availableCustomLists"
                                 :key="list.id"
                                 @click="handleSelectList(list)"
                                 :disabled="loading || list.id === currentListId"
-                                class="w-full flex items-center gap-3 p-3 rounded-lg transition-colors hover:bg-sidebar-accent disabled:opacity-50 disabled:cursor-not-allowed"
+                                class="flex w-full items-center gap-3 rounded-lg p-3 transition-colors hover:bg-sidebar-accent disabled:cursor-not-allowed disabled:opacity-50"
                                 :class="list.id === currentListId ? 'bg-sidebar-accent/50' : 'hover:bg-sidebar-accent'"
                             >
-                                <div class="flex items-center gap-2 flex-1">
+                                <div class="flex flex-1 items-center gap-2">
                                     <FontAwesomeIcon icon="list" class="text-purple-400" />
                                     <span class="text-sidebar-foreground">{{ list.name }}</span>
-                                    <span class="text-xs text-sidebar-accent-foreground bg-sidebar-accent px-2 py-1 rounded-full">
+                                    <span class="rounded-full bg-sidebar-accent px-2 py-1 text-xs text-sidebar-accent-foreground">
                                         {{ list.movies_count }}
                                     </span>
                                 </div>
-                                <div v-if="list.id === currentListId" class="text-xs text-sidebar-accent-foreground">
-                                    Lista atual
-                                </div>
+                                <div v-if="list.id === currentListId" class="text-xs text-sidebar-accent-foreground">Lista atual</div>
                             </button>
                         </div>
                     </div>
                 </div>
 
                 <!-- Create New List Option -->
-                <div class="mt-4 pt-4 border-t border-sidebar-border">
+                <div class="mt-4 border-t border-sidebar-border pt-4">
                     <button
                         @click="handleCreateNewList"
                         :disabled="loading"
-                        class="w-full flex items-center gap-3 p-3 rounded-lg transition-colors hover:bg-sidebar-accent text-sidebar-foreground disabled:opacity-50 disabled:cursor-not-allowed"
+                        class="flex w-full items-center gap-3 rounded-lg p-3 text-sidebar-foreground transition-colors hover:bg-sidebar-accent disabled:cursor-not-allowed disabled:opacity-50"
                     >
                         <FontAwesomeIcon icon="plus" class="text-green-400" />
                         <span>Criar nova lista personalizada</span>
@@ -89,18 +85,12 @@
             </div>
 
             <div class="flex justify-end gap-2">
-                <Button
-                    variant="ghost"
-                    @click="emit('update:open', false)"
-                    :disabled="loading"
-                >
-                    Cancelar
-                </Button>
+                <Button variant="ghost" @click="emit('update:open', false)" :disabled="loading"> Cancelar </Button>
             </div>
 
             <!-- Loading Overlay -->
-            <div v-if="loading" class="absolute inset-0 bg-black/50 flex items-center justify-center">
-                <div class="w-8 h-8 border-4 border-white border-t-transparent rounded-full animate-spin"></div>
+            <div v-if="loading" class="absolute inset-0 flex items-center justify-center bg-black/50">
+                <div class="h-8 w-8 animate-spin rounded-full border-4 border-white border-t-transparent"></div>
             </div>
         </DialogContent>
     </Dialog>
@@ -140,13 +130,9 @@ const emit = defineEmits<Emits>();
 
 const isMultiple = computed(() => (props.movieCount || 1) > 1);
 
-const availableStandardLists = computed(() =>
-    props.availableLists.filter(list => ['liked', 'watchlist', 'watched'].includes(list.type))
-);
+const availableStandardLists = computed(() => props.availableLists.filter((list) => ['liked', 'watchlist', 'watched'].includes(list.type)));
 
-const availableCustomLists = computed(() =>
-    props.availableLists.filter(list => list.type === 'custom')
-);
+const availableCustomLists = computed(() => props.availableLists.filter((list) => list.type === 'custom'));
 
 const currentListIcon = computed(() => {
     return getListIcon(props.currentListType || 'custom');

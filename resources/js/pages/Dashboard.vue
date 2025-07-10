@@ -7,8 +7,8 @@ import MovieCarousel from '@/components/movie/MovieCarousel.vue';
 import ToastContainer from '@/components/ui/ToastContainer.vue';
 import { useToast } from '@/composables/useToastSystem';
 import AppLayout from '@/layouts/AppLayout.vue';
-import { useMoviesStore } from '@/stores/movies';
 import { useMovieDetailsStore } from '@/stores/movieDetails';
+import { useMoviesStore } from '@/stores/movies';
 import { useUserListsStore, type MovieList } from '@/stores/userLists';
 import type { Movie } from '@/types/movies';
 import { Head } from '@inertiajs/vue3';
@@ -39,7 +39,6 @@ const comedyMovies = computed(() => moviesStore.comedyWithImages);
 const horrorMovies = computed(() => moviesStore.horrorWithImages);
 const animationMovies = computed(() => moviesStore.animationWithImages);
 const fantasyMovies = computed(() => moviesStore.fantasyWithImages);
-
 
 const handleMovieDetails = (movie: Movie) => {
     movieDetailsStore.openSidebar(movie);
@@ -136,12 +135,12 @@ onMounted(async () => {
     <Head title="Dashboard" />
 
     <AppLayout>
-        <div class="min-h-screen bg-gray-950 overflow-x-hidden">
+        <div class="min-h-screen overflow-x-hidden bg-gray-950">
             <!-- Hero Section Slideshow -->
             <HeroSectionSlideshow :movies="trendingMovies.slice(0, 5)" @movie-details="handleMovieDetails" @add-to-list="handleAddToList" />
 
             <!-- Main Content -->
-            <main class="container mx-auto space-y-12 px-4 py-8 md:py-12 max-w-full overflow-x-hidden">
+            <main class="container mx-auto max-w-full space-y-12 overflow-x-hidden px-4 py-8 md:py-12">
                 <!-- Trending Movies -->
                 <section class="overflow-hidden">
                     <MovieCarousel

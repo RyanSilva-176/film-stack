@@ -1,13 +1,11 @@
 <template>
     <div class="min-h-screen bg-black lg:grid lg:grid-cols-2">
         <!-- Left Side - Auth Form -->
-        <div class="flex min-h-screen items-center justify-center px-4 py-12 sm:px-6 lg:px-8 lg:order-1">
+        <div class="flex min-h-screen items-center justify-center px-4 py-12 sm:px-6 lg:order-1 lg:px-8">
             <div class="w-full max-w-md space-y-8">
                 <!-- Mobile Logo (visible only on mobile) -->
                 <div class="flex justify-center lg:hidden">
-                    <h1 class="text-3xl font-bold text-white">
-                        Film<span class="text-red-500">Stack</span>
-                    </h1>
+                    <h1 class="text-3xl font-bold text-white">Film<span class="text-red-500">Stack</span></h1>
                 </div>
 
                 <!-- Header -->
@@ -34,7 +32,7 @@
         </div>
 
         <!-- Right Side - Poster Slide (Hidden on mobile) -->
-        <div class="hidden lg:flex lg:flex-col lg:order-2">
+        <div class="hidden lg:order-2 lg:flex lg:flex-col">
             <PosterSlide />
         </div>
     </div>

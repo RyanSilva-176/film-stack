@@ -1,8 +1,8 @@
-import { defineStore } from 'pinia';
-import { ref, computed } from 'vue';
+import type { Genre, Movie, PaginationInfo } from '@/types/movies';
 import axios from 'axios';
+import { defineStore } from 'pinia';
+import { computed, ref } from 'vue';
 import { route } from 'ziggy-js';
-import type { Movie, Genre, PaginationInfo } from '@/types/movies';
 
 export interface SearchFilters {
     query?: string;
@@ -52,7 +52,7 @@ export const useSearchStore = defineStore('search', () => {
     const totalPages = computed(() => state.value.pagination?.total_pages || 1);
     const hasNextPage = computed(() => state.value.pagination?.has_next_page || false);
     const hasPreviousPage = computed(() => state.value.pagination?.has_previous_page || false);
-    
+
     const searchMovies = async (query: string, page = 1, filters: SearchFilters = {}): Promise<void> => {
         if (!query.trim()) {
             clearResults();
@@ -244,7 +244,7 @@ export const useSearchStore = defineStore('search', () => {
     };
 
     const getGenreName = (genreId: number): string => {
-        const genre = state.value.genres.find(g => g.id === genreId);
+        const genre = state.value.genres.find((g) => g.id === genreId);
         return genre?.name || 'Gênero Desconhecido';
     };
 

@@ -74,19 +74,19 @@
                         :disabled="loading.custom"
                     >
                         <span class="flex items-center gap-2">
-                            <font-awesome-icon 
-                                :icon="['fas', 'list']" 
-                                :class="isMovieInCustomList(list) ? 'text-purple-500' : 'text-sidebar-accent-foreground'" 
+                            <font-awesome-icon
+                                :icon="['fas', 'list']"
+                                :class="isMovieInCustomList(list) ? 'text-purple-500' : 'text-sidebar-accent-foreground'"
                             />
                             {{ isMovieInCustomList(list) ? 'Remover de' : 'Adicionar à' }} "{{ list.name }}"
                             <span class="flex items-center gap-2">
-                            <span
-                                v-if="list.movies_count > 0"
-                                class="ml-auto rounded-full bg-sidebar-accent px-2 py-1 text-xs text-sidebar-accent-foreground"
-                            >
-                                {{ list.movies_count }}
-                            </span>
-                            <Loader2 v-if="loading.custom" class="ml-auto h-4 w-4 animate-spin" />
+                                <span
+                                    v-if="list.movies_count > 0"
+                                    class="ml-auto rounded-full bg-sidebar-accent px-2 py-1 text-xs text-sidebar-accent-foreground"
+                                >
+                                    {{ list.movies_count }}
+                                </span>
+                                <Loader2 v-if="loading.custom" class="ml-auto h-4 w-4 animate-spin" />
                             </span>
                         </span>
                     </Button>
@@ -117,17 +117,13 @@
     </Dialog>
 
     <!-- Movie Details Sidebar -->
-    <MovieDetailsSidebar 
-        :is-open="sidebarOpen" 
-        :movie="selectedMovie" 
-        @update:open="sidebarOpen = $event" 
-    />
+    <MovieDetailsSidebar :is-open="sidebarOpen" :movie="selectedMovie" @update:open="sidebarOpen = $event" />
 </template>
 
 <script setup lang="ts">
+import MovieDetailsSidebar from '@/components/movie/MovieDetailsSidebar.vue';
 import Button from '@/components/ui/Button.vue';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import MovieDetailsSidebar from '@/components/movie/MovieDetailsSidebar.vue';
 import { useToast } from '@/composables/useToastSystem';
 import type { MovieList } from '@/stores/userLists';
 import { useUserListsStore } from '@/stores/userLists';
@@ -180,9 +176,8 @@ watch(
             updateMovieStates(props.movie);
         }
     },
-    { deep: true }
+    { deep: true },
 );
-
 
 const updateMovieStates = (movie: Movie) => {
     localIsLiked.value = false;
@@ -194,17 +189,17 @@ const updateMovieStates = (movie: Movie) => {
 
     if (likedList) {
         const items = likedList.items || likedList.movies || [];
-        localIsLiked.value = items.some(item => item.tmdb_movie_id === movie.id);
+        localIsLiked.value = items.some((item) => item.tmdb_movie_id === movie.id);
     }
 
     if (watchlist) {
         const items = watchlist.items || watchlist.movies || [];
-        localIsInWatchlist.value = items.some(item => item.tmdb_movie_id === movie.id);
+        localIsInWatchlist.value = items.some((item) => item.tmdb_movie_id === movie.id);
     }
 
     if (watchedList) {
         const items = watchedList.items || watchedList.movies || [];
-        localIsWatched.value = items.some(item => item.tmdb_movie_id === movie.id);
+        localIsWatched.value = items.some((item) => item.tmdb_movie_id === movie.id);
     }
 };
 
@@ -308,18 +303,17 @@ const handleMarkWatched = async () => {
     }
 };
 
-
 const isMovieInCustomList = (list: MovieList): boolean => {
     if (!props.movie) return false;
     const items = list.items || list.movies || [];
-    return items.some(item => item.tmdb_movie_id === props.movie!.id);
+    return items.some((item) => item.tmdb_movie_id === props.movie!.id);
 };
 
 const handleToggleCustomList = async (list: MovieList) => {
     if (!props.movie) return;
 
     const items = list.items || list.movies || [];
-    const isInList = items.some(item => item.tmdb_movie_id === props.movie!.id);
+    const isInList = items.some((item) => item.tmdb_movie_id === props.movie!.id);
 
     loading.value.custom = true;
     try {

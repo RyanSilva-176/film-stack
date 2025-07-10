@@ -98,7 +98,7 @@
                                 </div>
                                 <div v-else class="flex h-36 w-24 items-center justify-center rounded-lg bg-gray-800 shadow-lg">
                                     <div class="text-center">
-                                        <font-awesome-icon :icon="['fas', 'film']" class="h-6 w-6 text-gray-600 mb-1" />
+                                        <font-awesome-icon :icon="['fas', 'film']" class="mb-1 h-6 w-6 text-gray-600" />
                                         <p class="text-xs text-gray-500">Sem imagem</p>
                                     </div>
                                 </div>
@@ -217,60 +217,69 @@
                                     <font-awesome-icon :icon="['fas', 'list']" class="h-4 w-4" />
                                     Ações Rápidas
                                 </h3>
-                                
+
                                 <div class="space-y-2">
                                     <!-- Like Button -->
                                     <button
                                         @click="handleToggleLike"
                                         :disabled="loadingStates.like"
-                                        class="flex w-full items-center gap-3 rounded-lg px-3 py-2 text-sm transition-colors hover:bg-gray-800 cursor-pointer"
+                                        class="flex w-full cursor-pointer items-center gap-3 rounded-lg px-3 py-2 text-sm transition-colors hover:bg-gray-800"
                                         :class="localIsLiked ? 'text-red-400' : 'text-gray-300'"
                                     >
-                                        <font-awesome-icon 
-                                            :icon="['fas', 'heart']" 
+                                        <font-awesome-icon
+                                            :icon="['fas', 'heart']"
                                             class="h-4 w-4"
-                                            :class="localIsLiked ? 'text-red-500' : 'text-gray-400'" 
+                                            :class="localIsLiked ? 'text-red-500' : 'text-gray-400'"
                                         />
                                         <span class="flex-1 text-left">
                                             {{ localIsLiked ? 'Remover dos Curtidos' : 'Adicionar aos Curtidos' }}
                                         </span>
-                                        <div v-if="loadingStates.like" class="h-4 w-4 animate-spin rounded-full border-2 border-red-500 border-t-transparent"></div>
+                                        <div
+                                            v-if="loadingStates.like"
+                                            class="h-4 w-4 animate-spin rounded-full border-2 border-red-500 border-t-transparent"
+                                        ></div>
                                     </button>
 
                                     <!-- Watchlist Button -->
                                     <button
                                         @click="handleToggleWatchlist"
                                         :disabled="loadingStates.watchlist"
-                                        class="flex w-full items-center gap-3 rounded-lg px-3 py-2 text-sm transition-colors hover:bg-gray-800 cursor-pointer"
+                                        class="flex w-full cursor-pointer items-center gap-3 rounded-lg px-3 py-2 text-sm transition-colors hover:bg-gray-800"
                                         :class="localIsInWatchlist ? 'text-blue-400' : 'text-gray-300'"
                                     >
-                                        <font-awesome-icon 
-                                            :icon="['fas', 'bookmark']" 
+                                        <font-awesome-icon
+                                            :icon="['fas', 'bookmark']"
                                             class="h-4 w-4"
-                                            :class="localIsInWatchlist ? 'text-blue-500' : 'text-gray-400'" 
+                                            :class="localIsInWatchlist ? 'text-blue-500' : 'text-gray-400'"
                                         />
                                         <span class="flex-1 text-left">
                                             {{ localIsInWatchlist ? 'Remover da Watchlist' : 'Adicionar à Watchlist' }}
                                         </span>
-                                        <div v-if="loadingStates.watchlist" class="h-4 w-4 animate-spin rounded-full border-2 border-blue-500 border-t-transparent"></div>
+                                        <div
+                                            v-if="loadingStates.watchlist"
+                                            class="h-4 w-4 animate-spin rounded-full border-2 border-blue-500 border-t-transparent"
+                                        ></div>
                                     </button>
 
                                     <!-- Watched Button -->
                                     <button
                                         @click="handleMarkWatched"
                                         :disabled="loadingStates.watched"
-                                        class="flex w-full items-center gap-3 rounded-lg px-3 py-2 text-sm transition-colors hover:bg-gray-800 cursor-pointer"
+                                        class="flex w-full cursor-pointer items-center gap-3 rounded-lg px-3 py-2 text-sm transition-colors hover:bg-gray-800"
                                         :class="localIsWatched ? 'text-green-400' : 'text-gray-300'"
                                     >
-                                        <font-awesome-icon 
-                                            :icon="['fas', 'check-circle']" 
+                                        <font-awesome-icon
+                                            :icon="['fas', 'check-circle']"
                                             class="h-4 w-4"
-                                            :class="localIsWatched ? 'text-green-500' : 'text-gray-400'" 
+                                            :class="localIsWatched ? 'text-green-500' : 'text-gray-400'"
                                         />
                                         <span class="flex-1 text-left">
                                             {{ localIsWatched ? 'Marcar como Não Assistido' : 'Marcar como Assistido' }}
                                         </span>
-                                        <div v-if="loadingStates.watched" class="h-4 w-4 animate-spin rounded-full border-2 border-green-500 border-t-transparent"></div>
+                                        <div
+                                            v-if="loadingStates.watched"
+                                            class="h-4 w-4 animate-spin rounded-full border-2 border-green-500 border-t-transparent"
+                                        ></div>
                                     </button>
                                 </div>
                             </div>
@@ -281,31 +290,31 @@
                                     <font-awesome-icon :icon="['fas', 'folder']" class="h-4 w-4" />
                                     Listas Personalizadas
                                 </h3>
-                                
+
                                 <div class="max-h-32 space-y-2 overflow-y-auto">
                                     <button
                                         v-for="list in customLists"
                                         :key="list.id"
                                         @click="handleToggleCustomList(list)"
                                         :disabled="loadingStates.custom"
-                                        class="flex w-full items-center gap-3 rounded-lg px-3 py-2 text-sm transition-colors hover:bg-gray-800 cursor-pointer"
+                                        class="flex w-full cursor-pointer items-center gap-3 rounded-lg px-3 py-2 text-sm transition-colors hover:bg-gray-800"
                                         :class="isMovieInCustomList(list) ? 'text-purple-400' : 'text-gray-300'"
                                     >
-                                        <font-awesome-icon 
-                                            :icon="['fas', 'list']" 
+                                        <font-awesome-icon
+                                            :icon="['fas', 'list']"
                                             class="h-4 w-4"
-                                            :class="isMovieInCustomList(list) ? 'text-purple-500' : 'text-gray-400'" 
+                                            :class="isMovieInCustomList(list) ? 'text-purple-500' : 'text-gray-400'"
                                         />
                                         <span class="flex-1 truncate text-left">
                                             {{ isMovieInCustomList(list) ? 'Remover de' : 'Adicionar à' }} "{{ list.name }}"
                                         </span>
-                                        <span
-                                            v-if="list.movies_count > 0"
-                                            class="rounded-full bg-gray-700 px-2 py-1 text-xs text-gray-300"
-                                        >
+                                        <span v-if="list.movies_count > 0" class="rounded-full bg-gray-700 px-2 py-1 text-xs text-gray-300">
                                             {{ list.movies_count }}
                                         </span>
-                                        <div v-if="loadingStates.custom" class="h-4 w-4 animate-spin rounded-full border-2 border-purple-500 border-t-transparent"></div>
+                                        <div
+                                            v-if="loadingStates.custom"
+                                            class="h-4 w-4 animate-spin rounded-full border-2 border-purple-500 border-t-transparent"
+                                        ></div>
                                     </button>
                                 </div>
                             </div>
@@ -314,7 +323,7 @@
                             <div class="space-y-2 border-t border-gray-800 pt-3">
                                 <button
                                     @click="handleCreateList"
-                                    class="flex w-full items-center gap-3 rounded-lg px-3 py-2 text-sm text-gray-300 transition-colors hover:bg-gray-800 cursor-pointer"
+                                    class="flex w-full cursor-pointer items-center gap-3 rounded-lg px-3 py-2 text-sm text-gray-300 transition-colors hover:bg-gray-800"
                                 >
                                     <font-awesome-icon :icon="['fas', 'plus']" class="h-4 w-4 text-gray-400" />
                                     <span class="flex-1 text-left">Criar Nova Lista</span>
@@ -359,11 +368,11 @@
 </template>
 
 <script setup lang="ts">
-import { useMoviesStore } from '@/stores/movies';
-import { useUserListsStore } from '@/stores/userLists';
 import { useToast } from '@/composables/useToastSystem';
-import type { Movie } from '@/types/movies';
+import { useMoviesStore } from '@/stores/movies';
 import type { MovieList } from '@/stores/userLists';
+import { useUserListsStore } from '@/stores/userLists';
+import type { Movie } from '@/types/movies';
 import { library } from '@fortawesome/fontawesome-svg-core';
 import {
     faAlignLeft,
@@ -468,18 +477,18 @@ const posterImageUrl = computed(() => {
     if (movieDetails.value.poster_path) return `https://image.tmdb.org/t/p/w342${movieDetails.value.poster_path}`;
     if (movieDetails.value.backdrop_url) return movieDetails.value.backdrop_url;
     if (movieDetails.value.backdrop_path) return `https://image.tmdb.org/t/p/w342${movieDetails.value.backdrop_path}`;
-    
+
     return null;
 });
 
 const backdropImageUrl = computed(() => {
     if (backdropError.value || !movieDetails.value) return null;
-    
+
     if (movieDetails.value.backdrop_url) return movieDetails.value.backdrop_url;
     if (movieDetails.value.backdrop_path) return `https://image.tmdb.org/t/p/w780${movieDetails.value.backdrop_path}`;
     if (movieDetails.value.poster_url) return movieDetails.value.poster_url;
     if (movieDetails.value.poster_path) return `https://image.tmdb.org/t/p/w780${movieDetails.value.poster_path}`;
-    
+
     return null;
 });
 
@@ -613,7 +622,7 @@ const customLists = computed(() => {
 const isMovieInCustomList = (list: MovieList): boolean => {
     if (!props.movie) return false;
     const items = list.items || list.movies || [];
-    return items.some(item => item.tmdb_movie_id === props.movie!.id);
+    return items.some((item) => item.tmdb_movie_id === props.movie!.id);
 };
 
 const updateMovieStates = (movie: Movie) => {
@@ -627,17 +636,17 @@ const updateMovieStates = (movie: Movie) => {
 
     if (likedList) {
         const items = likedList.items || likedList.movies || [];
-        localIsLiked.value = items.some(item => item.tmdb_movie_id === movie.id);
+        localIsLiked.value = items.some((item) => item.tmdb_movie_id === movie.id);
     }
 
     if (watchlist) {
         const items = watchlist.items || watchlist.movies || [];
-        localIsInWatchlist.value = items.some(item => item.tmdb_movie_id === movie.id);
+        localIsInWatchlist.value = items.some((item) => item.tmdb_movie_id === movie.id);
     }
 
     if (watchedList) {
         const items = watchedList.items || watchedList.movies || [];
-        localIsWatched.value = items.some(item => item.tmdb_movie_id === movie.id);
+        localIsWatched.value = items.some((item) => item.tmdb_movie_id === movie.id);
     }
 };
 
@@ -713,7 +722,7 @@ const handleToggleCustomList = async (list: MovieList) => {
 
 const handleCreateList = () => {
     warning('Criar lista por aqui ainda não implementado. Acesse a página de listas para criar uma nova lista.');
-    // closePanel();  
+    // closePanel();
 };
 
 const goToLogin = () => {
@@ -732,7 +741,7 @@ watch(
         if (newMovie && isOpen) {
             loadMovieDetails();
             updateMovieStates(newMovie);
-            
+
             if (page.props.auth.user) {
                 userListsStore.fetchUserLists();
             }
@@ -748,7 +757,7 @@ watch(
             updateMovieStates(props.movie);
         }
     },
-    { deep: true }
+    { deep: true },
 );
 
 watch(
@@ -758,7 +767,7 @@ watch(
             updateMovieStates(props.movie);
         }
     },
-    { immediate: true }
+    { immediate: true },
 );
 </script>
 

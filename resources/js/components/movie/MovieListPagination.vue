@@ -1,7 +1,7 @@
 <script setup lang="ts">
-import { computed } from 'vue';
 import { Button } from '@/components/ui/button';
 import { ChevronLeft, ChevronRight, MoreHorizontal } from 'lucide-vue-next';
+import { computed } from 'vue';
 
 interface Props {
     currentPage: number;
@@ -84,13 +84,7 @@ const handleNext = () => {
 <template>
     <div class="flex items-center justify-center gap-2 py-4">
         <!-- Previous Button -->
-        <Button
-            variant="outline"
-            size="sm"
-            :disabled="!hasPrevious"
-            @click="handlePrevious"
-            class="gap-1"
-        >
+        <Button variant="outline" size="sm" :disabled="!hasPrevious" @click="handlePrevious" class="gap-1">
             <ChevronLeft class="h-4 w-4" />
             <span class="hidden sm:inline">Anterior</span>
         </Button>
@@ -99,41 +93,24 @@ const handleNext = () => {
         <div class="flex items-center gap-1">
             <template v-for="page in visiblePages" :key="page">
                 <!-- Ellipsis -->
-                <div
-                    v-if="page === '...'"
-                    class="flex items-center justify-center w-8 h-8"
-                >
+                <div v-if="page === '...'" class="flex h-8 w-8 items-center justify-center">
                     <MoreHorizontal class="h-4 w-4 text-muted-foreground" />
                 </div>
 
                 <!-- Page Number -->
-                <Button
-                    v-else
-                    :variant="page === currentPage ? 'default' : 'outline'"
-                    size="sm"
-                    class="w-8 h-8 p-0"
-                    @click="handlePageClick(page)"
-                >
+                <Button v-else :variant="page === currentPage ? 'default' : 'outline'" size="sm" class="h-8 w-8 p-0" @click="handlePageClick(page)">
                     {{ page }}
                 </Button>
             </template>
         </div>
 
         <!-- Next Button -->
-        <Button
-            variant="outline"
-            size="sm"
-            :disabled="!hasNext"
-            @click="handleNext"
-            class="gap-1"
-        >
+        <Button variant="outline" size="sm" :disabled="!hasNext" @click="handleNext" class="gap-1">
             <span class="hidden sm:inline">Próxima</span>
             <ChevronRight class="h-4 w-4" />
         </Button>
     </div>
 
     <!-- Mobile Summary -->
-    <div class="text-center text-sm text-muted-foreground mt-2 sm:hidden">
-        Página {{ currentPage }} de {{ totalPages }}
-    </div>
+    <div class="mt-2 text-center text-sm text-muted-foreground sm:hidden">Página {{ currentPage }} de {{ totalPages }}</div>
 </template>

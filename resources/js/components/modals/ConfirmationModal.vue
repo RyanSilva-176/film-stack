@@ -1,12 +1,9 @@
 <template>
     <Dialog :open="isOpen" @update:open="$emit('update:open', $event)">
-        <DialogContent class="sm:max-w-md bg-sidebar text-sidebar-foreground border-sidebar-border">
+        <DialogContent class="border-sidebar-border bg-sidebar text-sidebar-foreground sm:max-w-md">
             <DialogHeader>
-                <DialogTitle class="text-lg font-semibold flex items-center gap-2 text-sidebar-primary">
-                    <font-awesome-icon 
-                        :icon="['fas', iconName]" 
-                        :class="iconColor"
-                    />
+                <DialogTitle class="flex items-center gap-2 text-lg font-semibold text-sidebar-primary">
+                    <font-awesome-icon :icon="['fas', iconName]" :class="iconColor" />
                     {{ title }}
                 </DialogTitle>
                 <DialogDescription class="text-sm text-sidebar-accent-foreground">
@@ -18,18 +15,13 @@
                 <p class="text-sm text-sidebar-foreground">
                     {{ message }}
                 </p>
-                
+
                 <!-- Item details if provided -->
-                <div v-if="itemDetails" class="mt-4 p-3 bg-sidebar-accent rounded-lg">
+                <div v-if="itemDetails" class="mt-4 rounded-lg bg-sidebar-accent p-3">
                     <div class="flex items-center gap-3">
-                        <img 
-                            v-if="itemDetails.image" 
-                            :src="itemDetails.image" 
-                            :alt="itemDetails.title"
-                            class="w-12 h-16 object-cover rounded"
-                        />
+                        <img v-if="itemDetails.image" :src="itemDetails.image" :alt="itemDetails.title" class="h-16 w-12 rounded object-cover" />
                         <div class="flex-1">
-                            <h4 class="font-medium text-sm text-sidebar-foreground">{{ itemDetails.title }}</h4>
+                            <h4 class="text-sm font-medium text-sidebar-foreground">{{ itemDetails.title }}</h4>
                             <p v-if="itemDetails.subtitle" class="text-xs text-sidebar-accent-foreground">
                                 {{ itemDetails.subtitle }}
                             </p>
@@ -43,7 +35,7 @@
                     variant="outline"
                     @click="handleCancel"
                     :disabled="loading"
-                    class="flex-1 sm:flex-initial border-sidebar-border text-sidebar-foreground hover:bg-sidebar-accent"
+                    class="flex-1 border-sidebar-border text-sidebar-foreground hover:bg-sidebar-accent sm:flex-initial"
                 >
                     {{ cancelText }}
                 </Button>
@@ -52,13 +44,13 @@
                     @click="handleConfirm"
                     :loading="loading"
                     class="flex-1 sm:flex-initial"
-                    :class="confirmVariant === 'destructive' ? 'bg-red-600 hover:bg-red-700' : 'bg-sidebar-primary text-sidebar-primary-foreground hover:bg-sidebar-primary/90'"
+                    :class="
+                        confirmVariant === 'destructive'
+                            ? 'bg-red-600 hover:bg-red-700'
+                            : 'bg-sidebar-primary text-sidebar-primary-foreground hover:bg-sidebar-primary/90'
+                    "
                 >
-                    <font-awesome-icon 
-                        v-if="!loading" 
-                        :icon="['fas', confirmIcon]" 
-                        class="mr-2"
-                    />
+                    <font-awesome-icon v-if="!loading" :icon="['fas', confirmIcon]" class="mr-2" />
                     {{ confirmText }}
                 </Button>
             </DialogFooter>
@@ -67,8 +59,8 @@
 </template>
 
 <script setup lang="ts">
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import Button from '@/components/ui/Button.vue';
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { computed } from 'vue';
 
 interface ItemDetails {
@@ -101,8 +93,8 @@ const props = withDefaults(defineProps<Props>(), {
 
 const emit = defineEmits<{
     'update:open': [value: boolean];
-    'confirm': [];
-    'cancel': [];
+    confirm: [];
+    cancel: [];
 }>();
 
 const iconName = computed(() => {

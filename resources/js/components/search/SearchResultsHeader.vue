@@ -1,7 +1,7 @@
 <script setup lang="ts">
-import { computed } from 'vue';
 import { useSearchStore } from '@/stores/search';
-import { Search, Filter } from 'lucide-vue-next';
+import { Filter, Search } from 'lucide-vue-next';
+import { computed } from 'vue';
 
 interface Props {
     query?: string;

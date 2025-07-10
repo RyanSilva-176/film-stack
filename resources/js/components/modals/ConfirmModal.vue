@@ -7,7 +7,7 @@
                     <div class="flex h-10 w-10 items-center justify-center rounded-full" :class="iconBackgroundClass">
                         <FontAwesomeIcon :icon="iconName" :class="iconClass" />
                     </div>
-                    
+
                     <div>
                         <DialogTitle class="text-lg font-semibold" :class="titleClass">
                             {{ title }}
@@ -24,35 +24,18 @@
             </div>
 
             <div class="flex justify-end gap-3 pt-4">
-                <Button
-                    variant="ghost"
-                    @click="handleCancel"
-                    :disabled="loading"
-                    :label="cancelLabel"
-                />
-                <Button
-                    :variant="confirmButtonVariant"
-                    :loading="loading"
-                    @click="handleConfirm"
-                    :label="confirmLabel"
-                    :icon="confirmIcon"
-                />
+                <Button variant="ghost" @click="handleCancel" :disabled="loading" :label="cancelLabel" />
+                <Button :variant="confirmButtonVariant" :loading="loading" @click="handleConfirm" :label="confirmLabel" :icon="confirmIcon" />
             </div>
         </DialogContent>
     </Dialog>
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue';
-import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome';
 import Button from '@/components/ui/Button.vue';
-import {
-    Dialog,
-    DialogContent,
-    DialogDescription,
-    DialogHeader,
-    DialogTitle,
-} from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome';
+import { computed } from 'vue';
 
 type ConfirmVariant = 'danger' | 'warning' | 'info' | 'success';
 
@@ -77,8 +60,8 @@ const props = withDefaults(defineProps<Props>(), {
 
 const emit = defineEmits<{
     'update:open': [value: boolean];
-    'confirm': [];
-    'cancel': [];
+    confirm: [];
+    cancel: [];
 }>();
 
 const iconName = computed(() => {

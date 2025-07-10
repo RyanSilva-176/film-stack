@@ -1,6 +1,6 @@
 <template>
     <Dialog :open="isOpen" @update:open="$emit('update:open', $event)">
-        <DialogContent class="sm:max-w-md bg-sidebar text-sidebar-foreground border-sidebar-border">
+        <DialogContent class="border-sidebar-border bg-sidebar text-sidebar-foreground sm:max-w-md">
             <DialogHeader>
                 <DialogTitle class="text-lg font-semibold text-sidebar-primary">
                     {{ isEditing ? 'Editar Lista' : 'Criar Nova Lista' }}
@@ -21,7 +21,7 @@
                         placeholder="Ex: Filmes para Assistir no Fim de Semana"
                         required
                         :disabled="loading"
-                        class="w-full bg-sidebar-accent border-sidebar-border text-sidebar-foreground placeholder:text-sidebar-accent-foreground"
+                        class="w-full border-sidebar-border bg-sidebar-accent text-sidebar-foreground placeholder:text-sidebar-accent-foreground"
                     />
                     <p v-if="errors.name" class="text-sm text-red-500">{{ errors.name }}</p>
                 </div>
@@ -35,7 +35,7 @@
                         placeholder="Adicione uma descrição opcional para sua lista..."
                         rows="3"
                         :disabled="loading"
-                        class="flex min-h-[60px] w-full resize-none rounded-md border border-sidebar-border bg-sidebar-accent px-3 py-2 text-sm shadow-sm placeholder:text-sidebar-accent-foreground text-sidebar-foreground focus-visible:ring-1 focus-visible:ring-sidebar-ring focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50"
+                        class="flex min-h-[60px] w-full resize-none rounded-md border border-sidebar-border bg-sidebar-accent px-3 py-2 text-sm text-sidebar-foreground shadow-sm placeholder:text-sidebar-accent-foreground focus-visible:ring-1 focus-visible:ring-sidebar-ring focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50"
                     />
                 </div>
 
@@ -82,10 +82,20 @@
 
                 <!-- Ações -->
                 <div class="flex flex-col-reverse gap-2 pt-4 sm:flex-row">
-                    <Button type="button" variant="outline" @click="$emit('update:open', false)" :disabled="loading" class="w-full sm:w-auto border-sidebar-border text-sidebar-foreground hover:bg-sidebar-accent">
+                    <Button
+                        type="button"
+                        variant="outline"
+                        @click="$emit('update:open', false)"
+                        :disabled="loading"
+                        class="w-full border-sidebar-border text-sidebar-foreground hover:bg-sidebar-accent sm:w-auto"
+                    >
                         Cancelar
                     </Button>
-                    <Button type="submit" :disabled="loading || !form.name.trim()" class="w-full sm:w-auto bg-sidebar-primary text-sidebar-primary-foreground hover:bg-sidebar-primary/90">
+                    <Button
+                        type="submit"
+                        :disabled="loading || !form.name.trim()"
+                        class="w-full bg-sidebar-primary text-sidebar-primary-foreground hover:bg-sidebar-primary/90 sm:w-auto"
+                    >
                         <Loader2 v-if="loading" class="mr-2 h-4 w-4 animate-spin" />
                         {{ isEditing ? 'Atualizar Lista' : 'Criar Lista' }}
                     </Button>

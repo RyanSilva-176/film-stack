@@ -118,7 +118,7 @@ const performSearch = async () => {
         const filters: any = {};
         if (yearValue.value) filters.year = yearValue.value;
         if (props.sort !== 'popularity.desc') filters.sortBy = props.sort;
-        
+
         // CRITICAL FIX: Include genre filter in text search when both are present
         if (genreId.value) filters.genreId = genreId.value;
 

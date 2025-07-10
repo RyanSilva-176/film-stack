@@ -1,6 +1,6 @@
 <template>
     <div
-        class="movie-card-base group relative cursor-pointer overflow-hidden rounded-lg bg-gray-900 transition-all duration-300 w-full h-full flex flex-col max-w-full"
+        class="movie-card-base group relative flex h-full w-full max-w-full cursor-pointer flex-col overflow-hidden rounded-lg bg-gray-900 transition-all duration-300"
         :class="[loading ? 'animate-pulse' : '', ...cardClasses]"
         @click="handleClick"
     >
@@ -10,7 +10,7 @@
                 type="checkbox"
                 :checked="selected"
                 @click.stop="emit('selection-change', movie, !selected)"
-                class="w-5 h-5 text-red-600 bg-gray-800 border-gray-600 rounded focus:ring-red-500 focus:ring-2"
+                class="h-5 w-5 rounded border-gray-600 bg-gray-800 text-red-600 focus:ring-2 focus:ring-red-500"
             />
         </div>
 
@@ -67,22 +67,22 @@
         </div>
 
         <!-- Movie Info -->
-        <div class="flex-1 p-3 flex flex-col" :class="infoClasses">
+        <div class="flex flex-1 flex-col p-3" :class="infoClasses">
             <slot name="content" :movie="movie" :genres="movieGenres" />
         </div>
 
         <!-- Loading Overlay -->
-        <div v-if="actionLoading" class="absolute inset-0 bg-black/50 flex items-center justify-center">
-            <div class="w-8 h-8 border-4 border-white border-t-transparent rounded-full animate-spin"></div>
+        <div v-if="actionLoading" class="absolute inset-0 flex items-center justify-center bg-black/50">
+            <div class="h-8 w-8 animate-spin rounded-full border-4 border-white border-t-transparent"></div>
         </div>
     </div>
 </template>
 
 <script setup lang="ts">
-import { computed, ref } from 'vue';
-import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome';
 import { useMoviesStore } from '@/stores/movies';
 import type { Movie } from '@/types/movies';
+import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome';
+import { computed, ref } from 'vue';
 
 interface Props {
     movie: Movie;
@@ -109,7 +109,8 @@ const props = withDefaults(defineProps<Props>(), {
     cardClasses: () => ['hover:shadow-xl', 'hover:scale-105'],
     imageClasses: () => ['group-hover:scale-110'],
     infoClasses: () => ['justify-between'],
-    actionOverlayClasses: 'absolute inset-0 bg-gradient-to-t from-black/90 via-transparent to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100',
+    actionOverlayClasses:
+        'absolute inset-0 bg-gradient-to-t from-black/90 via-transparent to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100',
     actionLoading: false,
 });
 
@@ -147,35 +148,35 @@ const movieGenres = computed(() => {
 const displayTags = computed(() => {
     if (!props.listTypes || props.listTypes.length === 0) return [];
 
-    return props.listTypes.map(type => {
+    return props.listTypes.map((type) => {
         switch (type) {
             case 'liked':
                 return {
                     type,
                     label: 'Curtido',
                     icon: 'heart',
-                    class: 'bg-red-500/80 text-white'
+                    class: 'bg-red-500/80 text-white',
                 };
             case 'watchlist':
                 return {
                     type,
                     label: 'Lista',
                     icon: 'bookmark',
-                    class: 'bg-blue-500/80 text-white'
+                    class: 'bg-blue-500/80 text-white',
                 };
             case 'watched':
                 return {
                     type,
                     label: 'Assistido',
                     icon: 'check-circle',
-                    class: 'bg-green-500/80 text-white'
+                    class: 'bg-green-500/80 text-white',
                 };
             case 'custom':
                 return {
                     type,
                     label: 'Personalizada',
                     icon: 'list',
-                    class: 'bg-purple-500/80 text-white'
+                    class: 'bg-purple-500/80 text-white',
                 };
         }
     });

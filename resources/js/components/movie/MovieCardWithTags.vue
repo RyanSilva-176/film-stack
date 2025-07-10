@@ -1,15 +1,12 @@
 <template>
-    <div
-        class="movie-card-wrapper relative"
-        :class="[isSelected ? 'ring-2 ring-red-500 ring-offset-2 ring-offset-gray-900' : '']"
-    >
+    <div class="movie-card-wrapper relative" :class="[isSelected ? 'ring-2 ring-red-500 ring-offset-2 ring-offset-gray-900' : '']">
         <!-- Selection Checkbox -->
         <div v-if="selectionMode" class="absolute top-2 left-2 z-10">
             <input
                 type="checkbox"
                 :checked="isSelected"
                 @click.stop="emit('toggleSelection')"
-                class="w-5 h-5 text-red-600 bg-gray-800 border-gray-600 rounded focus:ring-red-500 focus:ring-2"
+                class="h-5 w-5 rounded border-gray-600 bg-gray-800 text-red-600 focus:ring-2 focus:ring-red-500"
             />
         </div>
 

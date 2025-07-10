@@ -1,6 +1,6 @@
+import type { Movie } from '@/types/movies';
 import { defineStore } from 'pinia';
 import { ref } from 'vue';
-import type { Movie } from '@/types/movies';
 
 export const useMovieDetailsStore = defineStore('movieDetails', () => {
     const isOpen = ref(false);

@@ -5,55 +5,55 @@ import { resolvePageComponent } from 'laravel-vite-plugin/inertia-helpers';
 import { createPinia } from 'pinia';
 import type { DefineComponent } from 'vue';
 import { createApp, h } from 'vue';
-import { ZiggyVue } from 'ziggy-js';
 import { Toaster } from 'vue-sonner';
+import { ZiggyVue } from 'ziggy-js';
 import { initializeTheme } from './composables/useAppearance';
 
 import { library } from '@fortawesome/fontawesome-svg-core';
-import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome';
 import {
-    faPlay,
-    faPlus,
-    faStar,
+    faArchive,
+    faArrowDown,
+    faBars,
+    faBookmark,
+    faCheck,
+    faCheckCircle,
+    faCheckSquare,
     faChevronLeft,
     faChevronRight,
-    faBars,
-    faTimes,
-    faHome,
-    faUser,
-    faSignInAlt,
-    faUserPlus,
-    faFire,
-    faThumbsUp,
-    faArrowDown,
-    faFilm,
-    faHeart,
-    faShare,
-    faCheckCircle,
+    faClock,
+    faCopy,
+    faEdit,
+    faEllipsisH,
     faExclamationCircle,
     faExclamationTriangle,
-    faInfoCircle,
-    faCopy,
-    faClock,
-    faTrash,
-    faBookmark,
     faExpand,
-    faMaximize,
-    faEdit,
-    faArchive,
-    faRefresh,
-    faLock,
-    faCheck,
-    faMagnifyingGlass,
-    faTachometerAlt,
-    faEllipsisH,
-    faSearch,
-    faTh,
+    faFilm,
+    faFire,
+    faHeart,
+    faHome,
+    faInfoCircle,
     faList,
-    faCheckSquare,
+    faLock,
+    faMagnifyingGlass,
+    faMaximize,
+    faPlay,
+    faPlus,
+    faRefresh,
+    faSearch,
+    faShare,
+    faSignInAlt,
+    faStar,
+    faTachometerAlt,
+    faTh,
+    faThumbsUp,
+    faTimes,
+    faTrash,
+    faUser,
+    faUserPlus,
 } from '@fortawesome/free-solid-svg-icons';
+import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome';
 
-import {faGoogle} from '@fortawesome/free-brands-svg-icons';
+import { faGoogle } from '@fortawesome/free-brands-svg-icons';
 
 library.add(
     faPlay,
@@ -95,7 +95,7 @@ library.add(
     faTh,
     faList,
     faCheckSquare,
-    faGoogle
+    faGoogle,
 );
 
 const appName = import.meta.env.VITE_APP_NAME || 'Laravel';

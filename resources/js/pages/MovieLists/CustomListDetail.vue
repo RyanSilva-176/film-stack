@@ -10,17 +10,17 @@
                     <div class="block md:hidden">
                         <!-- Header with icon and title -->
                         <div class="mb-4">
-                            <div class="flex items-center gap-3 mb-2">
+                            <div class="mb-2 flex items-center gap-3">
                                 <div class="rounded-full bg-purple-600 p-2">
                                     <font-awesome-icon :icon="['fas', 'list']" class="h-4 w-4 text-white" />
                                 </div>
-                                <h1 class="text-xl font-bold text-white truncate">
+                                <h1 class="truncate text-xl font-bold text-white">
                                     {{ customList?.name || 'Lista Personalizada' }}
                                 </h1>
                             </div>
-                            
+
                             <div class="ml-10">
-                                <p v-if="customList?.description" class="text-sm text-gray-300 mb-1">
+                                <p v-if="customList?.description" class="mb-1 text-sm text-gray-300">
                                     {{ customList.description }}
                                 </p>
                                 <p v-if="!loading && customList" class="text-xs text-gray-400">
@@ -31,33 +31,33 @@
                         </div>
 
                         <!-- Mobile Action Buttons - Horizontal scroll -->
-                        <div class="flex gap-2 overflow-x-auto pb-2 -mx-1 px-1">
-                            <Button 
-                                variant="outline" 
-                                size="sm" 
-                                icon="edit" 
-                                @click="handleEditList" 
-                                class="text-gray-300 border-gray-600 hover:border-purple-500 hover:text-white whitespace-nowrap flex-shrink-0"
+                        <div class="-mx-1 flex gap-2 overflow-x-auto px-1 pb-2">
+                            <Button
+                                variant="outline"
+                                size="sm"
+                                icon="edit"
+                                @click="handleEditList"
+                                class="flex-shrink-0 border-gray-600 whitespace-nowrap text-gray-300 hover:border-purple-500 hover:text-white"
                             >
                                 Editar
                             </Button>
 
-                            <Button 
-                                variant="outline" 
-                                size="sm" 
-                                icon="share-alt" 
-                                @click="handleShareList" 
-                                class="text-gray-300 border-gray-600 hover:border-blue-500 hover:text-white whitespace-nowrap flex-shrink-0"
+                            <Button
+                                variant="outline"
+                                size="sm"
+                                icon="share-alt"
+                                @click="handleShareList"
+                                class="flex-shrink-0 border-gray-600 whitespace-nowrap text-gray-300 hover:border-blue-500 hover:text-white"
                             >
                                 Compartilhar
                             </Button>
 
-                            <Button 
-                                variant="outline" 
-                                size="sm" 
-                                icon="trash" 
-                                @click="handleDeleteList" 
-                                class="text-red-400 border-red-600 hover:border-red-500 hover:text-red-300 whitespace-nowrap flex-shrink-0"
+                            <Button
+                                variant="outline"
+                                size="sm"
+                                icon="trash"
+                                @click="handleDeleteList"
+                                class="flex-shrink-0 border-red-600 whitespace-nowrap text-red-400 hover:border-red-500 hover:text-red-300"
                             >
                                 Excluir
                             </Button>
@@ -65,7 +65,7 @@
                     </div>
 
                     <!-- Desktop Layout -->
-                    <div class="hidden md:flex items-start justify-between">
+                    <div class="hidden items-start justify-between md:flex">
                         <div class="flex items-center gap-4">
                             <div class="rounded-full bg-purple-600 p-3">
                                 <font-awesome-icon :icon="['fas', 'list']" class="h-6 w-6 text-white" />
@@ -128,17 +128,22 @@
                 <!-- Loading State -->
                 <div v-if="loading" class="flex items-center justify-center py-12">
                     <div class="space-y-4 text-center">
-                        <div class="mx-auto h-12 w-12 md:h-16 md:w-16 animate-spin rounded-full border-4 border-purple-500 border-t-transparent"></div>
-                        <p class="text-sm md:text-base text-gray-400">Carregando lista...</p>
+                        <div
+                            class="mx-auto h-12 w-12 animate-spin rounded-full border-4 border-purple-500 border-t-transparent md:h-16 md:w-16"
+                        ></div>
+                        <p class="text-sm text-gray-400 md:text-base">Carregando lista...</p>
                     </div>
                 </div>
 
                 <!-- Error State -->
                 <div v-else-if="error" class="flex items-center justify-center py-12">
-                    <div class="space-y-4 text-center px-4">
-                        <div class="text-4xl md:text-6xl text-red-500">⚠️</div>
-                        <p class="text-sm md:text-base text-gray-400">Erro ao carregar lista</p>
-                        <button @click="loadCustomList" class="rounded-lg bg-purple-600 px-4 py-2 text-sm md:text-base text-white transition-colors hover:bg-purple-700">
+                    <div class="space-y-4 px-4 text-center">
+                        <div class="text-4xl text-red-500 md:text-6xl">⚠️</div>
+                        <p class="text-sm text-gray-400 md:text-base">Erro ao carregar lista</p>
+                        <button
+                            @click="loadCustomList"
+                            class="rounded-lg bg-purple-600 px-4 py-2 text-sm text-white transition-colors hover:bg-purple-700 md:text-base"
+                        >
                             Tentar novamente
                         </button>
                     </div>
@@ -146,13 +151,15 @@
 
                 <!-- Empty State -->
                 <div v-else-if="!listMovies.length" class="flex items-center justify-center py-12">
-                    <div class="max-w-sm md:max-w-md space-y-4 text-center px-4">
-                        <div class="text-4xl md:text-6xl text-gray-500">📝</div>
-                        <h2 class="text-lg md:text-xl font-semibold text-white">Lista vazia</h2>
-                        <p class="text-sm md:text-base text-gray-400">Esta lista ainda não possui filmes. Explore a dashboard e adicione filmes à sua lista!</p>
+                    <div class="max-w-sm space-y-4 px-4 text-center md:max-w-md">
+                        <div class="text-4xl text-gray-500 md:text-6xl">📝</div>
+                        <h2 class="text-lg font-semibold text-white md:text-xl">Lista vazia</h2>
+                        <p class="text-sm text-gray-400 md:text-base">
+                            Esta lista ainda não possui filmes. Explore a dashboard e adicione filmes à sua lista!
+                        </p>
                         <Link
                             href="/dashboard"
-                            class="inline-flex items-center gap-2 rounded-lg bg-purple-600 px-4 py-2 text-sm md:text-base text-white transition-colors hover:bg-purple-700"
+                            class="inline-flex items-center gap-2 rounded-lg bg-purple-600 px-4 py-2 text-sm text-white transition-colors hover:bg-purple-700 md:text-base"
                         >
                             <font-awesome-icon :icon="['fas', 'compass']" class="h-4 w-4" />
                             Explorar Filmes
@@ -187,17 +194,21 @@
 
                     <!-- List View -->
                     <div v-else class="space-y-3 md:space-y-4">
-                        <div v-for="movieItem in listMovies" :key="movieItem.id" class="flex items-center gap-3 md:gap-4 rounded-lg bg-gray-900 p-3 md:p-4">
+                        <div
+                            v-for="movieItem in listMovies"
+                            :key="movieItem.id"
+                            class="flex items-center gap-3 rounded-lg bg-gray-900 p-3 md:gap-4 md:p-4"
+                        >
                             <div v-if="selectionMode" class="flex-shrink-0">
                                 <input
                                     type="checkbox"
                                     :checked="selectedMovies.includes(movieItem.tmdb_movie_id)"
                                     @change="handleSelectionChange(movieItem.movie!, !selectedMovies.includes(movieItem.tmdb_movie_id))"
-                                    class="h-4 w-4 md:h-5 md:w-5 rounded border-gray-600 bg-gray-800 text-purple-600 focus:ring-2 focus:ring-purple-500"
+                                    class="h-4 w-4 rounded border-gray-600 bg-gray-800 text-purple-600 focus:ring-2 focus:ring-purple-500 md:h-5 md:w-5"
                                 />
                             </div>
 
-                            <div class="h-16 w-12 md:h-24 md:w-16 flex-shrink-0">
+                            <div class="h-16 w-12 flex-shrink-0 md:h-24 md:w-16">
                                 <img
                                     v-if="movieItem.movie?.poster_url"
                                     :src="movieItem.movie.poster_url"
@@ -205,25 +216,31 @@
                                     class="h-full w-full rounded object-cover"
                                 />
                                 <div v-else class="flex h-full w-full items-center justify-center rounded bg-gray-800">
-                                    <font-awesome-icon icon="film" class="text-gray-400 text-sm md:text-base" />
+                                    <font-awesome-icon icon="film" class="text-sm text-gray-400 md:text-base" />
                                 </div>
                             </div>
 
                             <div class="min-w-0 flex-1">
-                                <h3 class="truncate font-semibold text-white text-sm md:text-base">{{ movieItem.movie?.title }}</h3>
-                                <p class="text-xs md:text-sm text-gray-400">
+                                <h3 class="truncate text-sm font-semibold text-white md:text-base">{{ movieItem.movie?.title }}</h3>
+                                <p class="text-xs text-gray-400 md:text-sm">
                                     {{ movieItem.movie?.release_date ? new Date(movieItem.movie.release_date).getFullYear() : 'N/A' }}
                                 </p>
-                                <p class="text-xs md:text-sm text-gray-400">Adicionado em {{ formatDate(movieItem.created_at) }}</p>
+                                <p class="text-xs text-gray-400 md:text-sm">Adicionado em {{ formatDate(movieItem.created_at) }}</p>
                             </div>
 
                             <!-- Mobile: Show only dots menu -->
                             <div class="flex md:hidden">
-                                <Button variant="ghost" size="sm" icon="ellipsis-h" @click="handleShowOptions(movieItem.movie!)" class="text-gray-400" />
+                                <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    icon="ellipsis-h"
+                                    @click="handleShowOptions(movieItem.movie!)"
+                                    class="text-gray-400"
+                                />
                             </div>
 
                             <!-- Desktop: Show all action buttons -->
-                            <div class="hidden md:flex items-center gap-2">
+                            <div class="hidden items-center gap-2 md:flex">
                                 <Button variant="ghost" size="sm" icon="info-circle" @click="handleMovieDetails(movieItem.movie!)" />
                                 <!-- <Button
                                     variant="ghost"
@@ -252,24 +269,24 @@
                 </div>
 
                 <!-- Pagination -->
-                <div v-if="pagination.total_pages > 1" class="mt-6 md:mt-8 flex justify-center">
+                <div v-if="pagination.total_pages > 1" class="mt-6 flex justify-center md:mt-8">
                     <div class="flex items-center gap-2">
                         <button
                             @click="loadPage(pagination.current_page - 1)"
                             :disabled="pagination.current_page === 1 || loading"
-                            class="rounded-lg bg-gray-800 px-2 py-2 md:px-3 text-white transition-colors hover:bg-gray-700 disabled:opacity-50"
+                            class="rounded-lg bg-gray-800 px-2 py-2 text-white transition-colors hover:bg-gray-700 disabled:opacity-50 md:px-3"
                         >
                             <font-awesome-icon :icon="['fas', 'chevron-left']" class="h-3 w-3 md:h-4 md:w-4" />
                         </button>
 
-                        <span class="px-2 py-2 md:px-4 text-xs md:text-sm text-gray-300"> 
-                            Página {{ pagination.current_page }} de {{ pagination.total_pages }} 
+                        <span class="px-2 py-2 text-xs text-gray-300 md:px-4 md:text-sm">
+                            Página {{ pagination.current_page }} de {{ pagination.total_pages }}
                         </span>
 
                         <button
                             @click="loadPage(pagination.current_page + 1)"
                             :disabled="pagination.current_page === pagination.total_pages || loading"
-                            class="rounded-lg bg-gray-800 px-2 py-2 md:px-3 text-white transition-colors hover:bg-gray-700 disabled:opacity-50"
+                            class="rounded-lg bg-gray-800 px-2 py-2 text-white transition-colors hover:bg-gray-700 disabled:opacity-50 md:px-3"
                         >
                             <font-awesome-icon :icon="['fas', 'chevron-right']" class="h-3 w-3 md:h-4 md:w-4" />
                         </button>

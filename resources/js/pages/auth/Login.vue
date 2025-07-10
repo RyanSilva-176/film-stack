@@ -48,7 +48,7 @@ const handleSocialLogin = (provider: string) => {
         </div>
 
         <!-- Error Messages -->
-        <div v-if="form.hasErrors" class="rounded-lg border border-red-500/30 bg-red-900/20 p-4 mb-4">
+        <div v-if="form.hasErrors" class="mb-4 rounded-lg border border-red-500/30 bg-red-900/20 p-4">
             <div v-for="(error, key) in form.errors" :key="key" class="text-sm text-red-400">
                 {{ error }}
             </div>

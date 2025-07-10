@@ -10,9 +10,7 @@
             <div class="w-full max-w-md space-y-8">
                 <!-- Mobile Logo -->
                 <div class="flex justify-center lg:hidden">
-                    <h1 class="text-3xl font-bold text-white">
-                        Film<span class="text-red-500">Stack</span>
-                    </h1>
+                    <h1 class="text-3xl font-bold text-white">Film<span class="text-red-500">Stack</span></h1>
                 </div>
 
                 <!-- Header -->

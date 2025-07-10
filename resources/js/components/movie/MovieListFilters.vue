@@ -1,38 +1,38 @@
 <template>
-    <div class="bg-gray-900/50 backdrop-blur-sm border-b border-gray-800 sticky top-0 z-10">
+    <div class="sticky top-0 z-10 border-b border-gray-800 bg-gray-900/50 backdrop-blur-sm">
         <div class="container mx-auto px-4 py-4">
             <!-- Search and Filters Row -->
-            <div class="flex flex-col lg:flex-row gap-4 items-start lg:items-center justify-between">
+            <div class="flex flex-col items-start justify-between gap-4 lg:flex-row lg:items-center">
                 <!-- Search Input -->
-                <div v-if="showSearch" class="relative flex-1 max-w-md">
-                    <FontAwesomeIcon 
-                        icon="fa-solid fa-magnifying-glass" 
-                        class="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" 
+                <div v-if="showSearch" class="relative max-w-md flex-1">
+                    <FontAwesomeIcon
+                        icon="fa-solid fa-magnifying-glass"
+                        class="absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 transform text-gray-400"
                     />
                     <input
                         v-model="localSearch"
                         type="text"
                         placeholder="Buscar filmes..."
-                        class="w-full pl-10 pr-4 py-2 bg-gray-800 border border-gray-700 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent"
+                        class="w-full rounded-lg border border-gray-700 bg-gray-800 py-2 pr-4 pl-10 text-white placeholder-gray-400 focus:border-transparent focus:ring-2 focus:ring-red-500 focus:outline-none"
                         @input="handleSearchDebounced"
                     />
                     <button
                         v-if="localSearch"
                         @click="clearSearch"
-                        class="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-white"
+                        class="absolute top-1/2 right-3 -translate-y-1/2 transform text-gray-400 hover:text-white"
                     >
                         <FontAwesomeIcon icon="fa-solid fa-times" class="h-4 w-4" />
                     </button>
                 </div>
 
                 <!-- Filters and Actions -->
-                <div class="flex flex-wrap gap-2 items-center">
+                <div class="flex flex-wrap items-center gap-2">
                     <!-- Genre Filter -->
                     <select
                         v-if="showGenre"
                         v-model="localGenreFilter"
                         @change="handleFilterChange"
-                        class="px-3 py-2 bg-gray-800 border border-gray-700 rounded-lg text-white text-sm focus:outline-none focus:ring-2 focus:ring-red-500"
+                        class="rounded-lg border border-gray-700 bg-gray-800 px-3 py-2 text-sm text-white focus:ring-2 focus:ring-red-500 focus:outline-none"
                     >
                         <option value="">Todos os gêneros</option>
                         <option v-for="genre in availableGenres" :key="genre.id" :value="genre.id">
@@ -45,7 +45,7 @@
                         v-if="showYear"
                         v-model="localYear"
                         @change="handleFilterChange"
-                        class="px-3 py-2 bg-gray-800 border border-gray-700 rounded-lg text-white text-sm focus:outline-none focus:ring-2 focus:ring-red-500"
+                        class="rounded-lg border border-gray-700 bg-gray-800 px-3 py-2 text-sm text-white focus:ring-2 focus:ring-red-500 focus:outline-none"
                     >
                         <option value="">Todos os anos</option>
                         <option v-for="year in yearOptions" :key="year" :value="year">
@@ -58,7 +58,7 @@
                         v-if="showSort"
                         v-model="localSortBy"
                         @change="handleFilterChange"
-                        class="px-3 py-2 bg-gray-800 border border-gray-700 rounded-lg text-white text-sm focus:outline-none focus:ring-2 focus:ring-red-500"
+                        class="rounded-lg border border-gray-700 bg-gray-800 px-3 py-2 text-sm text-white focus:ring-2 focus:ring-red-500 focus:outline-none"
                     >
                         <!-- Search-specific sort options -->
                         <template v-if="showSearchSort">
@@ -71,7 +71,7 @@
                             <option value="title.asc">Título (A-Z)</option>
                             <option value="title.desc">Título (Z-A)</option>
                         </template>
-                        
+
                         <!-- List-specific sort options -->
                         <template v-else>
                             <option value="added_date_desc">Adicionado recentemente</option>
@@ -92,7 +92,7 @@
                         v-if="showPerPage"
                         v-model="localPerPage"
                         @change="handleFilterChange"
-                        class="px-3 py-2 bg-gray-800 border border-gray-700 rounded-lg text-white text-sm focus:outline-none focus:ring-2 focus:ring-red-500"
+                        class="rounded-lg border border-gray-700 bg-gray-800 px-3 py-2 text-sm text-white focus:ring-2 focus:ring-red-500 focus:outline-none"
                     >
                         <option value="20">20 por página</option>
                         <option value="40">40 por página</option>
@@ -101,14 +101,12 @@
                     </select>
 
                     <!-- View Toggle -->
-                    <div class="flex rounded-lg overflow-hidden border border-gray-700">
+                    <div class="flex overflow-hidden rounded-lg border border-gray-700">
                         <button
                             @click="handleViewChange('grid')"
                             :class="[
                                 'px-3 py-2 text-sm transition-colors',
-                                localViewMode === 'grid'
-                                    ? 'bg-red-600 text-white'
-                                    : 'bg-gray-800 text-gray-400 hover:text-white hover:bg-gray-700'
+                                localViewMode === 'grid' ? 'bg-red-600 text-white' : 'bg-gray-800 text-gray-400 hover:bg-gray-700 hover:text-white',
                             ]"
                         >
                             <FontAwesomeIcon icon="fa-solid fa-th" />
@@ -117,9 +115,7 @@
                             @click="handleViewChange('list')"
                             :class="[
                                 'px-3 py-2 text-sm transition-colors',
-                                localViewMode === 'list'
-                                    ? 'bg-red-600 text-white'
-                                    : 'bg-gray-800 text-gray-400 hover:text-white hover:bg-gray-700'
+                                localViewMode === 'list' ? 'bg-red-600 text-white' : 'bg-gray-800 text-gray-400 hover:bg-gray-700 hover:text-white',
                             ]"
                         >
                             <FontAwesomeIcon icon="fa-solid fa-list" />
@@ -138,55 +134,44 @@
             </div>
 
             <!-- Selection Actions -->
-            <div v-if="selectionMode" class="mt-4 p-3 bg-gray-800 rounded-lg">
-                <div class="flex flex-wrap gap-2 items-center justify-between">                <div class="flex items-center gap-4">
-                    <Button
-                        @click="selectAll"
-                        variant="ghost"
-                        size="sm"
-                        :label="`Selecionar todos (${totalCount})`"
-                    />
-                    <Button
-                        @click="clearSelection"
-                        variant="ghost"
-                        size="sm"
-                        label="Limpar seleção"
-                    />
-                    <span class="text-sm text-gray-400">
-                        {{ selectedCount }} de {{ totalCount }} selecionados
-                    </span>
-                </div>
+            <div v-if="selectionMode" class="mt-4 rounded-lg bg-gray-800 p-3">
+                <div class="flex flex-wrap items-center justify-between gap-2">
+                    <div class="flex items-center gap-4">
+                        <Button @click="selectAll" variant="ghost" size="sm" :label="`Selecionar todos (${totalCount})`" />
+                        <Button @click="clearSelection" variant="ghost" size="sm" label="Limpar seleção" />
+                        <span class="text-sm text-gray-400"> {{ selectedCount }} de {{ totalCount }} selecionados </span>
+                    </div>
 
-                <div class="flex flex-wrap gap-2">
-                    <Button
-                        v-if="!isWatchedList"
-                        @click="handleBulkMarkWatched"
-                        :disabled="selectedCount === 0 || bulkLoading"
-                        variant="success"
-                        size="sm"
-                        icon="check"
-                        label="Marcar como assistido"
-                    />
-                    
-                    <Button
-                        @click="handleBulkMove"
-                        :disabled="selectedCount === 0 || bulkLoading"
-                        variant="primary"
-                        size="sm"
-                        icon="exchange-alt"
-                        label="Mover para lista"
-                    />
-                    
-                    <Button
-                        v-if="showBulkRemove"
-                        @click="confirmBulkRemove"
-                        :disabled="selectedCount === 0 || bulkLoading"
-                        variant="destructive"
-                        size="sm"
-                        icon="trash"
-                        label="Remover da lista"
-                    />
-                </div>
+                    <div class="flex flex-wrap gap-2">
+                        <Button
+                            v-if="!isWatchedList"
+                            @click="handleBulkMarkWatched"
+                            :disabled="selectedCount === 0 || bulkLoading"
+                            variant="success"
+                            size="sm"
+                            icon="check"
+                            label="Marcar como assistido"
+                        />
+
+                        <Button
+                            @click="handleBulkMove"
+                            :disabled="selectedCount === 0 || bulkLoading"
+                            variant="primary"
+                            size="sm"
+                            icon="exchange-alt"
+                            label="Mover para lista"
+                        />
+
+                        <Button
+                            v-if="showBulkRemove"
+                            @click="confirmBulkRemove"
+                            :disabled="selectedCount === 0 || bulkLoading"
+                            variant="destructive"
+                            size="sm"
+                            icon="trash"
+                            label="Remover da lista"
+                        />
+                    </div>
                 </div>
             </div>
 
@@ -213,10 +198,10 @@
 </template>
 
 <script setup lang="ts">
-import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome';
-import Button from '@/components/ui/Button.vue';
 import ConfirmModal from '@/components/modals/ConfirmModal.vue';
-import { ref, watch, computed } from 'vue';
+import Button from '@/components/ui/Button.vue';
+import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome';
+import { computed, ref, watch } from 'vue';
 
 // Simple debounce implementation
 function debounce(func: (...args: any[]) => void, wait: number) {
@@ -322,29 +307,47 @@ const yearOptions = computed(() => {
     return years;
 });
 
-watch(() => props.search, (newValue) => {
-    localSearch.value = newValue;
-});
+watch(
+    () => props.search,
+    (newValue) => {
+        localSearch.value = newValue;
+    },
+);
 
-watch(() => props.genreFilter, (newValue) => {
-    localGenreFilter.value = newValue;
-});
+watch(
+    () => props.genreFilter,
+    (newValue) => {
+        localGenreFilter.value = newValue;
+    },
+);
 
-watch(() => props.sortBy, (newValue) => {
-    localSortBy.value = newValue;
-});
+watch(
+    () => props.sortBy,
+    (newValue) => {
+        localSortBy.value = newValue;
+    },
+);
 
-watch(() => props.year, (newValue) => {
-    localYear.value = newValue || '';
-});
+watch(
+    () => props.year,
+    (newValue) => {
+        localYear.value = newValue || '';
+    },
+);
 
-watch(() => props.perPage, (newValue) => {
-    localPerPage.value = newValue || '20';
-});
+watch(
+    () => props.perPage,
+    (newValue) => {
+        localPerPage.value = newValue || '20';
+    },
+);
 
-watch(() => props.viewMode, (newValue) => {
-    localViewMode.value = newValue;
-});
+watch(
+    () => props.viewMode,
+    (newValue) => {
+        localViewMode.value = newValue;
+    },
+);
 
 const handleSearchDebounced = debounce((event: Event) => {
     const target = event.target as HTMLInputElement;
@@ -369,7 +372,7 @@ const emitFilterChange = () => {
         sort: localSortBy.value,
         perPage: localPerPage.value,
     };
-    
+
     emit('filter-change', filters);
     emit('update:search', localSearch.value);
     emit('update:genreFilter', localGenreFilter.value);

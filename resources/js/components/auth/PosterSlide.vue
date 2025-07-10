@@ -39,7 +39,7 @@
                     <div v-if="currentPoster.release_date">
                         {{ new Date(currentPoster.release_date).getFullYear() }}
                     </div>
-                    <div v-if="genreNames.length > 0" class="flex gap-2 flex-wrap">
+                    <div v-if="genreNames.length > 0" class="flex flex-wrap gap-2">
                         <span
                             v-for="genre in genreNames.slice(0, 3)"
                             :key="genre"

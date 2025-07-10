@@ -40,7 +40,7 @@
                 @bulk-move="handleBulkMove"
                 @bulk-remove="handleBulkRemove"
                 @filters-changed="handleFiltersChanged"
-                @update:genre-filter="(value) => filters.genre = value"
+                @update:genre-filter="(value) => (filters.genre = value)"
             />
 
             <!-- Main Content -->

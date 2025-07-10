@@ -2,8 +2,8 @@
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
-import { useSearchStore } from '@/stores/search';
 import { useMovieDetailsStore } from '@/stores/movieDetails';
+import { useSearchStore } from '@/stores/search';
 import { router } from '@inertiajs/vue3';
 import { Filter, Search, X } from 'lucide-vue-next';
 import { computed, onMounted, onUnmounted, ref, watch } from 'vue';
@@ -69,7 +69,7 @@ const handleSearch = () => {
 };
 
 const handlePreviewItemClick = (movieId: number) => {
-    const movie = searchStore.previewResults.find(m => m.id === movieId);
+    const movie = searchStore.previewResults.find((m) => m.id === movieId);
     if (movie) {
         movieDetailsStore.openSidebar(movie);
     }

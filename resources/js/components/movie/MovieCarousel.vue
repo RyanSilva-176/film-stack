@@ -1,14 +1,14 @@
 <template>
     <section class="movie-carousel">
         <!-- Section Header -->
-        <div class="mb-6 flex items-center justify-between px-4 sm:px-6 lg:px-8 max-w-full">
-            <h2 class="flex items-center gap-3 text-xl font-bold text-white sm:text-2xl flex-1 min-w-0" ref="titleRef">
-                <FontAwesomeIcon v-if="icon" :icon="icon" class="text-lg text-red-500 flex-shrink-0" />
+        <div class="mb-6 flex max-w-full items-center justify-between px-4 sm:px-6 lg:px-8">
+            <h2 class="flex min-w-0 flex-1 items-center gap-3 text-xl font-bold text-white sm:text-2xl" ref="titleRef">
+                <FontAwesomeIcon v-if="icon" :icon="icon" class="flex-shrink-0 text-lg text-red-500" />
                 <span class="truncate">{{ title }}</span>
             </h2>
 
             <!-- Navigation Arrows -->
-            <div class="flex items-center gap-2 flex-shrink-0 ml-4">
+            <div class="ml-4 flex flex-shrink-0 items-center gap-2">
                 <button
                     :disabled="!canScrollLeft"
                     :class="[
@@ -56,10 +56,7 @@
                 @update:model-value="onSlideChange"
             >
                 <Slide v-for="(movie, index) in movies" :key="movie.id">
-                    <div 
-                        class="carousel__item"
-                        :style="{ animationDelay: `${index * 0.1}s` }"
-                    >
+                    <div class="carousel__item" :style="{ animationDelay: `${index * 0.1}s` }">
                         <MovieCardWithTags
                             :movie="movie"
                             :size="size"
@@ -81,8 +78,8 @@
                             v-for="i in Math.min(totalPages, 8)"
                             :key="`indicator-${i}`"
                             :class="[
-                                'h-2 rounded-full transition-all duration-200 cursor-pointer',
-                                currentPage === i - 1 ? 'w-6 bg-red-500' : 'w-2 bg-gray-600 hover:bg-gray-500'
+                                'h-2 cursor-pointer rounded-full transition-all duration-200',
+                                currentPage === i - 1 ? 'w-6 bg-red-500' : 'w-2 bg-gray-600 hover:bg-gray-500',
                             ]"
                             @click="goToPage(i - 1)"
                         />
@@ -181,9 +178,9 @@ const carouselConfig = computed(() => ({
 
 const mobileItemsPerView = computed(() => {
     if (typeof window === 'undefined') return 1.5;
-    
+
     const width = window.innerWidth;
-    if (width >= 640) return 2.5; 
+    if (width >= 640) return 2.5;
     return 1.5;
 });
 
@@ -218,7 +215,7 @@ const canScrollLeft = computed(() => {
 
 const canScrollRight = computed(() => {
     if (!carousel.value || !props.movies.length) return false;
-    
+
     const currentItemsToShow = getCurrentItemsToShow();
     const maxSlides = Math.max(0, props.movies.length - Math.floor(currentItemsToShow));
     return currentSlide.value < maxSlides;
@@ -250,18 +247,10 @@ const onSlideChange = (newSlide: number) => {
 
 onMounted(() => {
     if (titleRef.value) {
-        gsap.fromTo(
-            titleRef.value,
-            { opacity: 0, x: -50 },
-            { opacity: 1, x: 0, duration: 0.6, ease: 'power2.out' }
-        );
+        gsap.fromTo(titleRef.value, { opacity: 0, x: -50 }, { opacity: 1, x: 0, duration: 0.6, ease: 'power2.out' });
     }
     if (carouselRef.value) {
-        gsap.fromTo(
-            carouselRef.value,
-            { opacity: 0, y: 30 },
-            { opacity: 1, y: 0, duration: 0.8, delay: 0.2, ease: 'power2.out' }
-        );
+        gsap.fromTo(carouselRef.value, { opacity: 0, y: 30 }, { opacity: 1, y: 0, duration: 0.8, delay: 0.2, ease: 'power2.out' });
     }
 });
 </script>
@@ -368,9 +357,9 @@ onMounted(() => {
         scroll-behavior: smooth;
         overflow: hidden;
     }
-    
+
     :deep(.carousel__track) {
-        gap: 1rem; 
+        gap: 1rem;
     }
 
     :deep(.carousel__slide) {

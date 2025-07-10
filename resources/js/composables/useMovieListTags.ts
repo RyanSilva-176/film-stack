@@ -1,6 +1,6 @@
-import { computed } from 'vue';
 import { useUserListsStore } from '@/stores/userLists';
 import type { Movie } from '@/types/movies';
+import { computed } from 'vue';
 
 export function useMovieListTags(movie: Movie) {
     const userListsStore = useUserListsStore();
@@ -10,6 +10,6 @@ export function useMovieListTags(movie: Movie) {
     });
 
     return {
-        listTags
+        listTags,
     };
 }

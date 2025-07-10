@@ -41,7 +41,7 @@ const addToast = (toast: Omit<ToastItem, 'id' | 'createdAt'>): string => {
 };
 
 const removeToast = (id: string): void => {
-    const index = toasts.value.findIndex(toast => toast.id === id);
+    const index = toasts.value.findIndex((toast) => toast.id === id);
     if (index > -1) {
         toasts.value.splice(index, 1);
     }

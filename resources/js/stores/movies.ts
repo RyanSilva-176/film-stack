@@ -1,15 +1,9 @@
-import { defineStore } from 'pinia';
-import { ref, computed } from 'vue';
-import axios from 'axios';
-import { route } from 'ziggy-js';
-import type {
-    Movie,
-    Genre,
-    TrendingResponse,
-    ApiResponse,
-    GenresResponse
-} from '@/types/movies';
+import type { ApiResponse, Genre, GenresResponse, Movie, TrendingResponse } from '@/types/movies';
 import { CACHE_DURATION } from '@/types/movies';
+import axios from 'axios';
+import { defineStore } from 'pinia';
+import { computed, ref } from 'vue';
+import { route } from 'ziggy-js';
 
 interface CacheTimestamps {
     trending: number | null;
@@ -52,7 +46,6 @@ const GENRE_IDS = {
 } as const;
 
 export const useMoviesStore = defineStore('movies', () => {
-
     //* State
     const movies = ref({
         trending: [] as Movie[],
@@ -99,16 +92,16 @@ export const useMoviesStore = defineStore('movies', () => {
 
     // ? Getters
     const isDataStale = computed(() => ({
-        trending: !lastFetch.value.trending || (Date.now() - lastFetch.value.trending) > CACHE_DURATION,
-        popular: !lastFetch.value.popular || (Date.now() - lastFetch.value.popular) > CACHE_DURATION,
-        upcoming: !lastFetch.value.upcoming || (Date.now() - lastFetch.value.upcoming) > CACHE_DURATION,
-        discover: !lastFetch.value.discover || (Date.now() - lastFetch.value.discover) > CACHE_DURATION,
-        action: !lastFetch.value.action || (Date.now() - lastFetch.value.action) > CACHE_DURATION,
-        comedy: !lastFetch.value.comedy || (Date.now() - lastFetch.value.comedy) > CACHE_DURATION,
-        horror: !lastFetch.value.horror || (Date.now() - lastFetch.value.horror) > CACHE_DURATION,
-        animation: !lastFetch.value.animation || (Date.now() - lastFetch.value.animation) > CACHE_DURATION,
-        fantasy: !lastFetch.value.fantasy || (Date.now() - lastFetch.value.fantasy) > CACHE_DURATION,
-        genres: !lastFetch.value.genres || (Date.now() - lastFetch.value.genres) > CACHE_DURATION,
+        trending: !lastFetch.value.trending || Date.now() - lastFetch.value.trending > CACHE_DURATION,
+        popular: !lastFetch.value.popular || Date.now() - lastFetch.value.popular > CACHE_DURATION,
+        upcoming: !lastFetch.value.upcoming || Date.now() - lastFetch.value.upcoming > CACHE_DURATION,
+        discover: !lastFetch.value.discover || Date.now() - lastFetch.value.discover > CACHE_DURATION,
+        action: !lastFetch.value.action || Date.now() - lastFetch.value.action > CACHE_DURATION,
+        comedy: !lastFetch.value.comedy || Date.now() - lastFetch.value.comedy > CACHE_DURATION,
+        horror: !lastFetch.value.horror || Date.now() - lastFetch.value.horror > CACHE_DURATION,
+        animation: !lastFetch.value.animation || Date.now() - lastFetch.value.animation > CACHE_DURATION,
+        fantasy: !lastFetch.value.fantasy || Date.now() - lastFetch.value.fantasy > CACHE_DURATION,
+        genres: !lastFetch.value.genres || Date.now() - lastFetch.value.genres > CACHE_DURATION,
     }));
 
     const transformMovieImages = (movie: Movie) => ({
@@ -152,18 +145,19 @@ export const useMoviesStore = defineStore('movies', () => {
         genres: genres.value.length > 0,
     }));
 
-    const isLoading = computed(() =>
-        loading.value.global ||
-        loading.value.trending ||
-        loading.value.popular ||
-        loading.value.upcoming ||
-        loading.value.discover ||
-        loading.value.action ||
-        loading.value.comedy ||
-        loading.value.horror ||
-        loading.value.animation ||
-        loading.value.fantasy ||
-        loading.value.genres
+    const isLoading = computed(
+        () =>
+            loading.value.global ||
+            loading.value.trending ||
+            loading.value.popular ||
+            loading.value.upcoming ||
+            loading.value.discover ||
+            loading.value.action ||
+            loading.value.comedy ||
+            loading.value.horror ||
+            loading.value.animation ||
+            loading.value.fantasy ||
+            loading.value.genres,
     );
 
     // ? Helpers
@@ -188,7 +182,7 @@ export const useMoviesStore = defineStore('movies', () => {
 
         try {
             const response = await axios.get<TrendingResponse>(route('api.tmdb.movies.trending'), {
-                params: { time_window: 'day', page: 1 }
+                params: { time_window: 'day', page: 1 },
             });
 
             if (response.data.success) {
@@ -213,7 +207,7 @@ export const useMoviesStore = defineStore('movies', () => {
 
         try {
             const response = await axios.get<ApiResponse<Movie>>(route('api.tmdb.movies.popular'), {
-                params: { page: 1 }
+                params: { page: 1 },
             });
 
             if (response.data.success) {
@@ -241,8 +235,8 @@ export const useMoviesStore = defineStore('movies', () => {
                 params: {
                     'primary_release_date.gte': new Date().toISOString().split('T')[0],
                     sort_by: 'popularity.desc',
-                    page: 1
-                }
+                    page: 1,
+                },
             });
 
             if (response.data.success) {
@@ -270,8 +264,8 @@ export const useMoviesStore = defineStore('movies', () => {
                 params: {
                     sort_by: 'vote_average.desc',
                     'vote_count.gte': 1000,
-                    page: 1
-                }
+                    page: 1,
+                },
             });
 
             if (response.data.success) {
@@ -298,7 +292,7 @@ export const useMoviesStore = defineStore('movies', () => {
 
         try {
             const response = await axios.get<ApiResponse<Movie>>(route('api.tmdb.movies.by-genre', { genreId }), {
-                params: { page: 1 }
+                params: { page: 1 },
             });
 
             if (response.data.success) {
@@ -340,9 +334,7 @@ export const useMoviesStore = defineStore('movies', () => {
 
     // ? Utility Functions
     const getGenreNames = (genreIds: number[]): string[] => {
-        return genreIds
-            .map(id => genres.value.find((genre: Genre) => genre.id === id)?.name)
-            .filter((name): name is string => !!name);
+        return genreIds.map((id) => genres.value.find((genre: Genre) => genre.id === id)?.name).filter((name): name is string => !!name);
     };
 
     const initializeData = async (): Promise<void> => {
@@ -350,11 +342,7 @@ export const useMoviesStore = defineStore('movies', () => {
         error.value = null;
 
         try {
-            await Promise.all([
-                fetchTrendingMovies(),
-                fetchPopularMovies(),
-                fetchGenres(),
-            ]);
+            await Promise.all([fetchTrendingMovies(), fetchPopularMovies(), fetchGenres()]);
         } catch (err) {
             handleApiError(err, 'initializeData');
             throw err;
