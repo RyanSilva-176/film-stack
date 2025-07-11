@@ -8,6 +8,7 @@ use App\Services\Tmdb\Enrichers\MovieDataEnricher;
 use App\Services\Tmdb\Processors\MovieCollectionProcessor;
 use App\Services\Tmdb\Builders\SearchCriteriaBuilder;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Cache;
 use Exception;
 
 class TmdbMovieService extends TmdbBaseService implements TmdbMovieServiceInterface
@@ -63,7 +64,65 @@ class TmdbMovieService extends TmdbBaseService implements TmdbMovieServiceInterf
 
     public function getMoviesByIds(array $movieIds, array $appendTo = []): array
     {
+        if (empty($movieIds)) {
+            return [];
+        }
+
+        $movieIds = array_unique(array_filter($movieIds, 'is_numeric'));
+
+        if (empty($movieIds)) {
+            return [];
+        }
+
         $movies = [];
+        $cached = [];
+        $toFetch = [];
+
+        foreach ($movieIds as $movieId) {
+            $cacheKey = $this->generateCacheKey("/movie/{$movieId}", $appendTo);
+
+            if ($cachedMovie = Cache::get($cacheKey)) {
+                $cached[$movieId] = MovieDTO::fromArray($this->enricher->enrichMovie($cachedMovie));
+            } else {
+                $toFetch[] = $movieId;
+            }
+        }
+
+        $chunks = array_chunk($toFetch, 10);
+
+        foreach ($chunks as $chunk) {
+            $chunkMovies = $this->fetchMoviesInChunk($chunk, $appendTo);
+            $movies = array_merge($movies, $chunkMovies);
+
+            if (count($chunks) > 1) {
+                usleep(100000);
+            }
+        }
+
+        $result = [];
+        foreach ($movieIds as $movieId) {
+            if (isset($cached[$movieId])) {
+                $result[] = $cached[$movieId];
+            } else {
+                foreach ($movies as $movie) {
+                    if ($movie->id === $movieId) {
+                        $result[] = $movie;
+                        break;
+                    }
+                }
+            }
+        }
+
+        return $result;
+    }
+
+    /**
+     * Busca um chunk de filmes com processamento otimizado
+     */
+    private function fetchMoviesInChunk(array $movieIds, array $appendTo = []): array
+    {
+        $movies = [];
+        $promises = [];
 
         foreach ($movieIds as $movieId) {
             try {
@@ -72,10 +131,12 @@ class TmdbMovieService extends TmdbBaseService implements TmdbMovieServiceInterf
                     $movies[] = $movie;
                 }
             } catch (Exception $e) {
-                Log::warning('Failed to fetch movie', [
+                Log::warning('Failed to fetch movie in chunk', [
                     'movie_id' => $movieId,
                     'error' => $e->getMessage()
                 ]);
+
+                continue;
             }
         }
 

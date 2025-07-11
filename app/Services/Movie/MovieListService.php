@@ -11,7 +11,6 @@ use App\Services\Tmdb\Contracts\TmdbGenreServiceInterface;
 use App\Services\Tmdb\TmdbService;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Log;
 use Exception;
 
 class MovieListService implements MovieListServiceInterface
@@ -121,21 +120,23 @@ class MovieListService implements MovieListServiceInterface
     public function getListMoviesWithDetails(MovieList $list, int $page = 1, ?array $filters = null): array
     {
         $filters = $filters ?? [];
-        $perPage = $filters['per_page'] ?? 20;
+        $perPage = min($filters['per_page'] ?? 20, 100);
 
-        $needsFiltering = !empty($filters['search']) || !empty($filters['genre']);
+        $needsMemoryFiltering = !empty($filters['search']) || !empty($filters['genre']);
 
-        if ($needsFiltering) {
-            return $this->getFilteredListMovies($list, $page, $perPage, $filters);
+        if ($needsMemoryFiltering) {
+            return $this->getFilteredListMoviesOptimized($list, $page, $perPage, $filters);
         }
 
-        return $this->getSortedListMovies($list, $page, $perPage, $filters);
+        return $this->getSortedListMoviesOptimized($list, $page, $perPage, $filters);
     }
 
-    private function getSortedListMovies(MovieList $list, int $page, int $perPage, array $filters): array
+    /**
+     * Versão otimizada para listas com ordenação simples (sem filtros complexos)
+     */
+    private function getSortedListMoviesOptimized(MovieList $list, int $page, int $perPage, array $filters): array
     {
         $offset = ($page - 1) * $perPage;
-
         $query = $list->items();
 
         $sortBy = $filters['sort'] ?? 'added_date_desc';
@@ -174,16 +175,18 @@ class MovieListService implements MovieListServiceInterface
 
         $tmdbMovies = $this->tmdbMovieService->getMoviesByIds($movieIds);
 
+        $tmdbMoviesMap = [];
+        foreach ($tmdbMovies as $tmdbMovie) {
+            $tmdbMoviesMap[$tmdbMovie->id] = $tmdbMovie;
+        }
+
         $movies = [];
         foreach ($items as $item) {
-            $tmdbData = collect($tmdbMovies)->firstWhere('id', $item->tmdb_movie_id);
-
-            if ($tmdbData) {
+            if (isset($tmdbMoviesMap[$item->tmdb_movie_id])) {
+                $tmdbData = $tmdbMoviesMap[$item->tmdb_movie_id];
                 $movieData = $tmdbData->toArray();
 
-                // Ensure genre data is properly enriched
                 $movieData = $this->tmdbGenreService->enrichMovieWithGenres($movieData);
-
                 $movieData['poster_url'] = $this->tmdbService->getPosterUrl($movieData['poster_path'] ?? null);
                 $movieData['backdrop_url'] = $this->tmdbService->getBackdropUrl($movieData['backdrop_path'] ?? null);
 
@@ -237,6 +240,148 @@ class MovieListService implements MovieListServiceInterface
         ];
     }
 
+    /**
+     *? Filtro de busca refatorado
+     */
+    private function getFilteredListMoviesOptimized(MovieList $list, int $page, int $perPage, array $filters): array
+    {
+        $maxItemsToProcess = 1000;
+
+        $sortBy = $filters['sort'] ?? 'added_date_desc';
+        $query = $list->items();
+
+        switch ($sortBy) {
+            case 'added_date_desc':
+                $query->orderBy('created_at', 'desc');
+                break;
+            case 'added_date_asc':
+                $query->orderBy('created_at', 'asc');
+                break;
+            case 'watched_date_desc':
+                $query->orderBy('watched_at', 'desc');
+                break;
+            case 'watched_date_asc':
+                $query->orderBy('watched_at', 'asc');
+                break;
+            default:
+                $query->orderBy('sort_order');
+                break;
+        }
+
+        $items = $query->take($maxItemsToProcess)->get();
+        $movieIds = $items->pluck('tmdb_movie_id')->toArray();
+
+        if (empty($movieIds)) {
+            return [
+                'movies' => [],
+                'pagination' => [
+                    'current_page' => $page,
+                    'total_pages' => 0,
+                    'total_count' => 0,
+                    'per_page' => $perPage,
+                ]
+            ];
+        }
+
+        $tmdbMovies = $this->tmdbMovieService->getMoviesByIds($movieIds);
+
+        $tmdbMoviesMap = [];
+        foreach ($tmdbMovies as $tmdbMovie) {
+            $tmdbMoviesMap[$tmdbMovie->id] = $tmdbMovie;
+        }
+
+        $filteredMovies = [];
+        foreach ($items as $item) {
+            if (!isset($tmdbMoviesMap[$item->tmdb_movie_id])) {
+                continue;
+            }
+
+            $tmdbData = $tmdbMoviesMap[$item->tmdb_movie_id];
+            $movieData = $tmdbData->toArray();
+            $movieData = $this->tmdbGenreService->enrichMovieWithGenres($movieData);
+
+            if (!empty($filters['search'])) {
+                $search = strtolower($filters['search']);
+                $title = strtolower($movieData['title'] ?? '');
+                $originalTitle = strtolower($movieData['original_title'] ?? '');
+
+                if (strpos($title, $search) === false && strpos($originalTitle, $search) === false) {
+                    continue;
+                }
+            }
+
+            if (!empty($filters['genre'])) {
+                $targetGenreId = (int)$filters['genre'];
+                $movieGenreIds = [];
+
+                if (isset($movieData['genre_ids']) && is_array($movieData['genre_ids'])) {
+                    $movieGenreIds = $movieData['genre_ids'];
+                } elseif (isset($movieData['genres']) && is_array($movieData['genres'])) {
+                    $movieGenreIds = array_column($movieData['genres'], 'id');
+                }
+
+                if (!in_array($targetGenreId, $movieGenreIds)) {
+                    continue;
+                }
+            }
+
+            $movieData['poster_url'] = $this->tmdbService->getPosterUrl($movieData['poster_path'] ?? null);
+            $movieData['backdrop_url'] = $this->tmdbService->getBackdropUrl($movieData['backdrop_path'] ?? null);
+
+            $filteredMovies[] = [
+                'id' => $item->id,
+                'movie_list_id' => $item->movie_list_id,
+                'tmdb_movie_id' => $item->tmdb_movie_id,
+                'watched_at' => $item->watched_at,
+                'rating' => $item->rating,
+                'notes' => $item->notes,
+                'sort_order' => $item->sort_order,
+                'created_at' => $item->created_at->toISOString(),
+                'updated_at' => $item->updated_at->toISOString(),
+                'movie' => $movieData,
+            ];
+        }
+
+        if (in_array($sortBy, ['title_asc', 'title_desc', 'release_date_asc', 'release_date_desc', 'rating_asc', 'rating_desc'])) {
+            usort($filteredMovies, function ($a, $b) use ($sortBy) {
+                switch ($sortBy) {
+                    case 'title_asc':
+                        return strcasecmp($a['movie']['title'] ?? '', $b['movie']['title'] ?? '');
+                    case 'title_desc':
+                        return strcasecmp($b['movie']['title'] ?? '', $a['movie']['title'] ?? '');
+                    case 'release_date_asc':
+                        return ($a['movie']['release_date'] ?? '') <=> ($b['movie']['release_date'] ?? '');
+                    case 'release_date_desc':
+                        return ($b['movie']['release_date'] ?? '') <=> ($a['movie']['release_date'] ?? '');
+                    case 'rating_asc':
+                        return ($a['movie']['vote_average'] ?? 0) <=> ($b['movie']['vote_average'] ?? 0);
+                    case 'rating_desc':
+                        return ($b['movie']['vote_average'] ?? 0) <=> ($a['movie']['vote_average'] ?? 0);
+                    default:
+                        return 0;
+                }
+            });
+        }
+
+        $totalFiltered = count($filteredMovies);
+        $totalPages = ceil($totalFiltered / $perPage);
+        $offset = ($page - 1) * $perPage;
+        $paginatedMovies = array_slice($filteredMovies, $offset, $perPage);
+
+        return [
+            'movies' => $paginatedMovies,
+            'pagination' => [
+                'current_page' => $page,
+                'total_pages' => $totalPages,
+                'total_count' => $totalFiltered,
+                'per_page' => $perPage,
+            ]
+        ];
+    }
+
+    /* 
+     ! Mérodo descontinuado
+    */
     private function getFilteredListMovies(MovieList $list, int $page, int $perPage, array $filters): array
     {
         $sortBy = $filters['sort'] ?? 'added_date_desc';
@@ -444,25 +589,45 @@ class MovieListService implements MovieListServiceInterface
                 ->whereIn('tmdb_movie_id', $tmdbMovieIds)
                 ->get();
 
+            if ($existingItems->isEmpty()) {
+                return 0;
+            }
+
+            $existingInDestination = $toList->items()
+                ->whereIn('tmdb_movie_id', $tmdbMovieIds)
+                ->pluck('tmdb_movie_id')
+                ->toArray();
+
+            $nextSortOrder = $toList->items()->max('sort_order') + 1;
+
+            $itemsToCreate = [];
+            $itemsToDelete = [];
             $movedCount = 0;
 
             foreach ($existingItems as $item) {
-                $existsInDestination = $toList->items()
-                    ->where('tmdb_movie_id', $item->tmdb_movie_id)
-                    ->exists();
-
-                if (!$existsInDestination) {
-                    $toList->items()->create([
+                if (!in_array($item->tmdb_movie_id, $existingInDestination)) {
+                    $itemsToCreate[] = [
+                        'movie_list_id' => $toList->id,
                         'tmdb_movie_id' => $item->tmdb_movie_id,
                         'watched_at' => $item->watched_at,
                         'rating' => $item->rating,
                         'notes' => $item->notes,
-                        'sort_order' => $toList->items()->max('sort_order') + 1,
-                    ]);
-
+                        'sort_order' => $nextSortOrder++,
+                        'created_at' => now(),
+                        'updated_at' => now(),
+                    ];
                     $movedCount++;
                 }
-                $item->delete();
+
+                $itemsToDelete[] = $item->id;
+            }
+
+            if (!empty($itemsToCreate)) {
+                DB::table('movie_list_items')->insert($itemsToCreate);
+            }
+
+            if (!empty($itemsToDelete)) {
+                MovieListItem::whereIn('id', $itemsToDelete)->delete();
             }
 
             return $movedCount;
